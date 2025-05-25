@@ -2,12 +2,12 @@ import { View, Text, TextInput, Pressable, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
-export default function Login() {
+export default () => {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = () => {
-    router.replace("/(tabs)/explore");
+    router.replace("/home");
   };
 
   return (

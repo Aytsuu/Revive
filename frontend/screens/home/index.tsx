@@ -22,7 +22,7 @@ const products = [
   { id: '5', image: require('../../assets/images/phone5.jpg') },
 ];
 
-export default function TabTwoScreen() {
+export default () => {
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
 
   return (

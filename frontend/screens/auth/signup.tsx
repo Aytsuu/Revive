@@ -9,7 +9,7 @@ export default function SignUp() {
   const [open, setOpen] = useState(false);
 
   const handleLogin = () => {
-    router.replace("/(tabs)/explore");
+    router.replace("/login");
   };
 
   return (
