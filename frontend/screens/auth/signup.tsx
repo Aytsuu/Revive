@@ -1,15 +1,31 @@
 import { View, Text, TextInput, Pressable, Switch, Platform } from 'react-native';
+import { Controller, useForm } from 'react-hook-form';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import DatePicker from 'react-native-date-picker';
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { SignupSchema } from '@/form-schema/authSchema';
+
+type SignupForm = z.infer<typeof SignupSchema>
 
 export default function SignUp() {
   const router = useRouter();
   const [birthDate, setBirthDate] = useState(new Date());
   const [open, setOpen] = useState(false);
+  const { control, trigger } = useForm<SignupForm>({
+    resolver: zodResolver(SignupSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      dateOfBirth: '',
+      phone: '',
+      password: ''
+    }
+  })
 
   const handleLogin = () => {
-    router.replace("/login");
+    
   };
 
   return (
@@ -25,18 +41,36 @@ export default function SignUp() {
         </Pressable>
       </View>
 
-      <TextInput
-        placeholder="Full Name"
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-        keyboardType="default"
-        autoCapitalize="words"
+      <Controller 
+        control={control}
+        name='username'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <TextInput
+            value={value}
+            onChangeText={onChange}
+            placeholder="Username"
+            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+            keyboardType="default"
+            autoCapitalize="words"
+          />
+        )}
+        
       />
-      <TextInput
-        placeholder="Email"
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
+
+      <Controller 
+        control={control}
+        name='email'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <TextInput
+            value={value}
+            onChangeText={onChange}
+            placeholder="Email"
+            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        )}
       />
 
       <Pressable
@@ -60,17 +94,34 @@ export default function SignUp() {
           setOpen(false);
         }}
       />
-
-      <TextInput
-        placeholder="Phone Number"
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-        keyboardType="phone-pad"
-        secureTextEntry={false}
+      
+      <Controller 
+        control={control}
+        name='email'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <TextInput
+            value={value}
+            onChangeText={onChange}
+            placeholder="Phone Number"
+            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+            keyboardType="phone-pad"
+            secureTextEntry={false}
+          />
+        )}
       />
-      <TextInput
-        placeholder="Set Password"
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-        secureTextEntry={true}
+
+      <Controller 
+        control={control}
+        name='email'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <TextInput
+            value={value}
+            onChangeText={onChange}
+            placeholder="Password"
+            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+            secureTextEntry={true}
+          />
+        )}
       />
 
       <Pressable
