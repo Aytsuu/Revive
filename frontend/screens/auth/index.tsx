@@ -7,7 +7,7 @@ export default () => {
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = () => {
-    router.replace("/home");
+    router.replace("/(tabs)/home");
   };
 
   return (

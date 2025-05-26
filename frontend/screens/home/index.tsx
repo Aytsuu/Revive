@@ -16,7 +16,7 @@ import { Feather } from '@expo/vector-icons';
 
 const categories = ['All', 'Phones', 'Cases', 'Chargers', 'Headphones'];
 
-const products = [
+export const products = [
   { id: '1', image: require('../../assets/images/phone1.jpg') },
   { id: '2', image: require('../../assets/images/phone2.jpg') },
   { id: '3', image: require('../../assets/images/phone3.jpg') },
@@ -25,8 +25,8 @@ const products = [
 ];
 
 export default () => {
-  const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const router = useRouter();
+  const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
 
   return (
     <SafeAreaView
@@ -75,7 +75,7 @@ export default () => {
               <Pressable
                 onPress={() =>
                   router.push({
-                    pathname: '/../screens/home/product',
+                    pathname: '/(product)/details',
                     params: { id: item.id },
                   })
                 }
