@@ -8,13 +8,15 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Pressable
 } from 'react-native';
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
 const categories = ['All', 'Phones', 'Cases', 'Chargers', 'Headphones'];
 
-const products = [
+export const products = [
   { id: '1', image: require('../../assets/images/phone1.jpg') },
   { id: '2', image: require('../../assets/images/phone2.jpg') },
   { id: '3', image: require('../../assets/images/phone3.jpg') },
@@ -23,6 +25,7 @@ const products = [
 ];
 
 export default () => {
+  const router = useRouter();
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
 
   return (
@@ -69,7 +72,15 @@ export default () => {
             columnWrapperStyle={{ justifyContent: 'space-between' }}
             scrollEnabled={false}
             renderItem={({ item }) => (
-              <View className="bg-gray-100 rounded-xl mb-4 w-[48%] overflow-hidden">
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/(product)/details',
+                    params: { id: item.id },
+                  })
+                }
+                className="bg-gray-100 rounded-xl mb-4 w-[48%] overflow-hidden"
+              >
                 <Image
                   source={item.image}
                   className="w-full h-32"
@@ -78,7 +89,7 @@ export default () => {
                 <Text className="p-2 font-medium text-gray-800">
                   Product {item.id}
                 </Text>
-              </View>
+              </Pressable>
             )}
           />
         </View>
