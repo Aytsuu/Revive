@@ -84,7 +84,7 @@ export default function ProductDetail() {
 {!showModal && (
         <View className="absolute bottom-0 left-0 right-0 px-6 py-4 pb-6 bg-white border-t border-gray-200 flex-row justify-between">
           <TouchableOpacity
-            className="flex-1 mr-2 bg-yellow-400 py-3 rounded-xl items-center"
+            className="flex-1 mr-2 bg-[#00477f] py-3 rounded-xl items-center"
             onPress={() => {
               setModalAction('addToCart');
               setShowModal(true);
@@ -172,7 +172,7 @@ export default function ProductDetail() {
           <View>
             {modalAction === 'addToCart' && (
               <TouchableOpacity
-                className="bg-yellow-400 py-3 rounded-xl items-center"
+                className="bg-[#00477f] py-3 rounded-xl items-center"
                 onPress={() => {
                   setShowModal(false);
                   // Add to Cart logic here
