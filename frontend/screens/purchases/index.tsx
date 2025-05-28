@@ -36,7 +36,7 @@ const orders: Order[] = [
     image: require("../../assets/images/phone1.jpg"),
     quantity: 1,
     color: "Red",
-    price: 599,
+    price: 59900,
     status: "pending",
   },
   {
@@ -45,7 +45,7 @@ const orders: Order[] = [
     image: require("../../assets/images/phone2.jpg"),
     quantity: 2,
     color: "Blue",
-    price: 749,
+    price: 43000,
     status: "toBeReceived",
   },
   {
@@ -54,7 +54,7 @@ const orders: Order[] = [
     image: require("../../assets/images/phone2.jpg"),
     quantity: 1,
     color: "Black",
-    price: 999,
+    price: 32000,
     status: "completed",
   },
 ];
