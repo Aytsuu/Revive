@@ -7,7 +7,12 @@ module.exports = {
     "./components/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        poppins: ['Poppins_400Regular'],
+        poppinsBold: ['Poppins_600Regular'],
+      },
+    },
   },
   plugins: [],
 };
