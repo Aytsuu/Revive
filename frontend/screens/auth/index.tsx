@@ -1,13 +1,53 @@
 import { View, Text, TextInput, Pressable, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { z } from 'zod';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema } from '@/form-schema/authSchema';
+import { useLoginUserAccount } from './queries/authAdd';
+import { Control } from 'react-hook-form';
+
+const GLOBAL_STYLE = {
+  view: 'w-full',
+  textField: 'border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]'
+};
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default () => {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
+  const { mutateAsync: loginUserAccount } = useLoginUserAccount();
+  const { control, trigger, getValues } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email_or_username: '',
+      password: ''
+    }
+  })
 
-  const handleLogin = () => {
-    router.replace("/(tabs)/home");
+  const handleLogin = async () => {
+    const formIsValid = await trigger(['email_or_username', 'password']);
+
+    if(!formIsValid) {
+      return;
+    }
+
+    const values = getValues();
+
+    loginUserAccount({
+      email_or_username: values.email_or_username,
+      password: values.password
+    }, {
+      onSuccess: (result) => {
+        router.replace('/(tabs)/home');
+      },
+      onError: (err) => {
+        console.log(err.message.split(' ').at(-1));
+      }
+    })
+
   };
 
   return (
@@ -18,22 +58,48 @@ export default () => {
         <Text className="text-base font-bold mb-4 font-poppins text-[#6c7278]">
           Don't have an account?
         </Text>
-        <Pressable onPress={() => router.push('/signup')}>
+        <Pressable onPress={() => router.push('/(auth)/signup')}>
           <Text className="text-base font-bold mb-4 font-poppins text-[#4d81e7]">
             Sign Up
           </Text>
         </Pressable>
       </View>
 
-      <TextInput
-        placeholder="Email"
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+      <Controller
+        control={control}
+        name='email_or_username'
+        render={({field: { onChange, value}, fieldState: {error}}) => (
+          <View className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Email/Username"
+              className={GLOBAL_STYLE.textField}
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
+
+        )}
       />
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        className="border font-poppins w-full max-w-md p-4 mb-4 text-base rounded border-[#edf1f3]"
+
+      <Controller
+        control={control}
+        name='password'
+        render={({field: { onChange, value}, fieldState: {error}}) => (
+          <View className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Password"
+              className={GLOBAL_STYLE.textField}
+              secureTextEntry
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
+
+        )}
       />
+
 
       {/* Remember me + Forgot Password */}
       <View className="flex flex-row justify-between w-full max-w-md mb-4 items-center">
