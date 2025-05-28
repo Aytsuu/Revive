@@ -1,23 +1,11 @@
 import { api } from "@/api/api";
 
-export const addUserAccount = async (
-  username: string,
-  email: string,
-  password: string
-) => {
+export const addUserAccount = async (data: Record<string, any>) => {
   try {
-    console.log({
-      username: username,
-      email: email,
-      password: password,
-    })
-    const res = await api.post("app/api/create/user/", {
-      username: username,
-      email: email,
-      password: password,
-    });
+    console.log(data)
+    const res = await api.post("app/api/create/user/", data);
 
-    return res;
+    return res.data;
   } catch (err) {
     throw err;
   }
