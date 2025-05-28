@@ -11,6 +11,13 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Entypo, AntDesign } from "@expo/vector-icons";
+import { Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { productFormSchema } from "@/form-schema/productSchema";
+
+type productForm = z.infer<typeof productFormSchema>
 
 type Product = {
   id: string;
@@ -22,7 +29,24 @@ type Product = {
   brand: string;
 };
 
-export default function Inventory() {
+const fields = [{ key: "name", label: "Product Name", keyboardType: "default" },
+              { key: "brand", label: "Brand", keyboardType: "default" },
+              { key: "color", label: "Color", keyboardType: "default" },
+              { key: "price", label: "Price", keyboardType: "numeric" },
+              { key: "quantity", label: "Quantity", keyboardType: "numeric" },
+            ]
+
+export default () => {
+  const {control, trigger, getValues} = useForm<productForm>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: '',
+      brand: '',
+      color: '',
+      price: '',
+      quantity: ''
+    }
+  });
   const [products, setProducts] = useState<Product[]>([
     {
       id: "1",
@@ -36,19 +60,16 @@ export default function Inventory() {
   ]);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [form, setForm] = useState<Partial<Product>>({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openAddModal = () => {
-    setForm({});
     setIsEditMode(false);
     setEditingId(null);
     setModalVisible(true);
   };
 
   const openEditModal = (product: Product) => {
-    setForm(product);
     setIsEditMode(true);
     setEditingId(product.id);
     setModalVisible(true);
@@ -63,37 +84,20 @@ export default function Inventory() {
 
     if (!result.canceled && result.assets.length > 0) {
       const selectedImage = result.assets[0];
-      setForm((prev) => ({ ...prev, image: { uri: selectedImage.uri } }));
+      
     }
   };
 
   const handleSaveProduct = () => {
-    if (!form.name || !form.brand || !form.price || !form.image) {
-      Alert.alert("Error", "Please fill all fields and select an image.");
-      return;
-    }
-
     if (isEditMode && editingId) {
-      setProducts((prev) =>
-        prev.map((p) => (p.id === editingId ? { ...p, ...form } as Product : p))
-      );
+      
     } else {
-      const newProduct: Product = {
-        id: Date.now().toString(),
-        name: form.name!,
-        brand: form.brand!,
-        price: form.price!,
-        quantity: form.quantity ?? 1,
-        color: form.color ?? "Black",
-        image: form.image!,
-      };
-      setProducts((prev) => [...prev, newProduct]);
+      
     }
 
     console.log(products)
 
     setModalVisible(false);
-    setForm({});
     setIsEditMode(false);
     setEditingId(null);
   };
@@ -170,43 +174,39 @@ export default function Inventory() {
             </TouchableOpacity>
 
             {/* Preview */}
-            {form.image && (
+            {/* {form.image && (
               <Image
-                source={form.image}
+                source={}
                 className="w-full h-40 rounded-md mb-4"
                 resizeMode="cover"
               />
-            )}
+            )} */}
 
             {/* Inputs with labels */}
-            {[
-              { key: "name", label: "Product Name", keyboardType: "default" },
-              { key: "brand", label: "Brand", keyboardType: "default" },
-              { key: "color", label: "Color", keyboardType: "default" },
-              { key: "price", label: "Price", keyboardType: "numeric" },
-              { key: "quantity", label: "Quantity", keyboardType: "numeric" },
-            ].map(({ key, label, keyboardType }) => (
-              <View key={key} className="mb-4">
-                <Text className="mb-1 text-sm font-medium">{label}</Text>
-                <TextInput
-                  value={String(form[key as keyof Product] ?? "")}
-                  onChangeText={(text) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      [key]: key === "price" || key === "quantity" ? Number(text) : text,
-                    }))
-                  }
-                  keyboardType={keyboardType as any}
-                  className="border border-gray-300 rounded-md p-2"
-                />
-              </View>
+            {fields.map(({ key, label, keyboardType }) => (
+              <Controller 
+                key={key}
+                control={control}
+                name={key as 'name' | 'brand' | 'color' | 'price' | 'quantity' }
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View key={key} className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">{label}</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType={keyboardType as any}
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
+              />
             ))}
 
             <View className="flex-row justify-end space-x-4 mt-2">
               <TouchableOpacity
                 onPress={() => {
                   setModalVisible(false);
-                  setForm({});
                   setIsEditMode(false);
                   setEditingId(null);
                 }}
