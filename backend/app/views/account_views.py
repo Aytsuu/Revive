@@ -44,8 +44,11 @@ class AccountLoginView(APIView):
         Token.objects.get_or_create(user=user)
 
         return Response({
+          'name': user.name,
+          'dateOfBirth': user.dob,
+          'phone': user.contact,
           'username': user.username,
-          'email': user.email
+          'email': user.email,
         })
 
       except Account.DoesNotExist:

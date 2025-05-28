@@ -6,6 +6,14 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/form-schema/authSchema';
 import { useLoginUserAccount } from './queries/authAdd';
+import { useDispatch } from 'react-redux'
+import { 
+  nameChanged, 
+  usernameChanged, 
+  emailChanged, 
+  dobChanged, 
+  phoneChanged
+} from '@/redux/accountSlice';
 
 const GLOBAL_STYLE = {
   view: 'w-full',
@@ -15,6 +23,7 @@ const GLOBAL_STYLE = {
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default () => {
+  const dispatch = useDispatch();
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
   const { mutateAsync: loginUserAccount } = useLoginUserAccount();
@@ -40,7 +49,15 @@ export default () => {
       password: values.password
     }, {
       onSuccess: (result) => {
+
+        dispatch(nameChanged(result.name));
+        dispatch(usernameChanged(result.username));
+        dispatch(emailChanged(result.email));
+        dispatch(dobChanged(result.dateOfBirth));
+        dispatch(phoneChanged(result.phone));
+
         router.replace('/(tabs)');
+
       },
       onError: (err) => {
         console.log(err.message.split(' ').at(-1));
