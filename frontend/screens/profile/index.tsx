@@ -52,69 +52,70 @@ export default function Profile() {
             }
             className="w-32 h-32 rounded-full border-4 border-gray-200"
           />
-          <View className="absolute bottom-0 right-0 bg-[#31394d] p-1 rounded-full">
-            <Text className="text-white text-xs">Edit</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View className='flex-col justify-between flex-1'>
+        <View className="mt-8 space-y-4">
+          <View>
+            <Text className="text-gray-500 text-sm">Name</Text>
+            {editMode ? (
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                className="border-b border-gray-300 text-lg font-semibold py-1"
+              />
+            ) : (
+              <Text className="text-lg font-semibold">{name}</Text>
+            )}
           </View>
-        </TouchableOpacity>
-      </View>
+          <View>
+            <Text className="text-gray-500 text-sm">Email</Text>
+            {editMode ? (
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                className="border-b border-gray-300 text-lg font-semibold py-1"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            ) : (
+              <Text className="text-lg font-semibold">{email}</Text>
+            )}
+          </View>
+          <View>
+            <Text className="text-gray-500 text-sm">Phone#</Text>
+            {editMode ? (
+              <TextInput
+                value={phone}
+                onChangeText={setPhone}
+                className="border-b border-gray-300 text-lg font-semibold py-1"
+                keyboardType="phone-pad"
+              />
+            ) : (
+              <Text className="text-lg font-semibold">{phone}</Text>
+            )}
+          </View>
+        </View>
 
-      <View className="mt-8 space-y-4">
-        <View>
-          <Text className="text-gray-500 text-sm">Name</Text>
-          {editMode ? (
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              className="border-b border-gray-300 text-lg font-semibold py-1"
-            />
-          ) : (
-            <Text className="text-lg font-semibold">{name}</Text>
+        <View className="mb-8 space-y-4">
+          {!editMode && (
+            <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
+              <Text className="text-gray-800 font-semibold text-base">My Purchases</Text>
+            </TouchableOpacity>
           )}
-        </View>
-        <View>
-          <Text className="text-gray-500 text-sm">Email</Text>
-          {editMode ? (
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              className="border-b border-gray-300 text-lg font-semibold py-1"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          ) : (
-            <Text className="text-lg font-semibold">{email}</Text>
-          )}
-        </View>
-        <View>
-          <Text className="text-gray-500 text-sm">Phone#</Text>
-          {editMode ? (
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              className="border-b border-gray-300 text-lg font-semibold py-1"
-              keyboardType="phone-pad"
-            />
-          ) : (
-            <Text className="text-lg font-semibold">{phone}</Text>
-          )}
-        </View>
-      </View>
-
-      <View className="mt-10 space-y-4">
-        {!editMode && (
-          <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
-            <Text className="text-gray-800 font-semibold text-base">My Purchases</Text>
+          <TouchableOpacity
+            onPress={toggleEdit}
+            className="bg-[#31394d] py-3 rounded-xl items-center"
+          >
+            <Text className="text-white font-semibold text-base">
+              {editMode ? 'Save Changes' : 'Edit Profile'}
+            </Text>
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          onPress={toggleEdit}
-          className="bg-[#31394d] py-3 rounded-xl items-center"
-        >
-          <Text className="text-white font-semibold text-base">
-            {editMode ? 'Save Changes' : 'Edit Profile'}
-          </Text>
-        </TouchableOpacity>
+        </View>
+
       </View>
+
     </SafeAreaView>
   );
 }

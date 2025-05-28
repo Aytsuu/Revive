@@ -42,43 +42,34 @@ const initialCart: CartItem[] = [
 
 export default function Cart() {
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
-
-  // State to track cart items (make it dynamic to remove items)
   const [cartItems, setCartItems] = useState<CartItem[]>(initialCart);
-
-  // State to track selected items by id
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  // Toggle selection of an item
   const toggleSelectItem = (id: string) => {
     setSelectedItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
       return newSet;
     });
   };
 
-  // Remove item from cart by id
-  const removeItem = (id: string) => {
+  const removeSelectedItems = () => {
+    if (selectedItems.size === 0) {
+      Alert.alert('No items selected', 'Please select items to remove.');
+      return;
+    }
+
     Alert.alert(
-      'Remove Item',
-      'Are you sure you want to remove this item from the cart?',
+      'Remove Items',
+      'Are you sure you want to remove the selected items?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            setCartItems(prev => prev.filter(item => item.id !== id));
-            setSelectedItems(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(id); // also remove from selected if needed
-              return newSet;
-            });
+            setCartItems(prev => prev.filter(item => !selectedItems.has(item.id)));
+            setSelectedItems(new Set());
           },
         },
       ],
@@ -86,7 +77,6 @@ export default function Cart() {
     );
   };
 
-  // Confirm checkout for selected items
   const confirmCheckoutSelected = () => {
     if (selectedItems.size === 0) {
       Alert.alert('No items selected', 'Please select items to checkout.');
@@ -95,8 +85,6 @@ export default function Cart() {
 
     const selectedCartItems = cartItems.filter(item => selectedItems.has(item.id));
     const selectedNames = selectedCartItems.map(item => item.name).join(', ');
-
-    // Calculate total price of selected items (price * quantity)
     const totalPrice = selectedCartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
@@ -119,26 +107,30 @@ export default function Cart() {
     );
   };
 
+  const adjustQuantity = (id: string, delta: number) => {
+    setCartItems(prev =>
+      prev.map(item =>
+        item.id === id
+          ? {
+            ...item,
+            quantity: Math.max(1, item.quantity + delta),
+          }
+          : item
+      )
+    );
+  };
+
   const renderItem: ListRenderItem<CartItem> = ({ item }) => {
     const isSelected = selectedItems.has(item.id);
 
     return (
       <View className="mb-4 p-3 border-[1px] border-gray-300 rounded-lg relative">
-        {/* "X" Remove button at top right */}
-        <TouchableOpacity
-          onPress={() => removeItem(item.id)}
-          className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-gray-300 justify-center items-center"
-        >
-          <Text className="text-black font-bold">×</Text>
-        </TouchableOpacity>
-
-        <View className="flex-row items-center justify-between">
+        <View className="flex-row justify-between">
           <View className="flex-row items-center space-x-4 flex-1">
             <TouchableOpacity
               onPress={() => toggleSelectItem(item.id)}
-              className={`w-6 h-6 border-2 rounded-md justify-center items-center ${
-                isSelected ? 'bg-[#31394d] border-[#31394d]' : 'border-gray-400'
-              }`}
+              className={`w-6 h-6 border-2 rounded-md justify-center items-center ${isSelected ? 'bg-[#31394d] border-[#31394d]' : 'border-gray-400'
+                }`}
             >
               {isSelected && <Text className="text-white font-bold">✓</Text>}
             </TouchableOpacity>
@@ -151,9 +143,25 @@ export default function Cart() {
             <View>
               <Text className="text-lg font-semibold">{item.name}</Text>
               <Text className="text-gray-600">Variant: {item.color}</Text>
-              <Text className="text-gray-600">Quantity: {item.quantity}</Text>
               <Text className="text-gray-800 font-medium">₱{item.price}</Text>
             </View>
+          </View>
+
+          {/* Quantity controls */}
+          <View className="flex-row justify-end items-center top-7 space-x-3">
+            <TouchableOpacity
+              className="w-7 h-7 bg-gray-200 rounded-full justify-center items-center"
+              onPress={() => adjustQuantity(item.id, -1)}
+            >
+              <Text className="text-lg font-bold">−</Text>
+            </TouchableOpacity>
+            <Text className="font-semibold">{item.quantity}</Text>
+            <TouchableOpacity
+              className="w-7 h-7 bg-gray-200 rounded-full justify-center items-center"
+              onPress={() => adjustQuantity(item.id, 1)}
+            >
+              <Text className="text-lg font-bold">+</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -175,15 +183,24 @@ export default function Cart() {
             data={cartItems}
             renderItem={renderItem}
             keyExtractor={item => item.id}
-            contentContainerStyle={{ paddingBottom: 80 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
           />
 
-          <TouchableOpacity
-            className="absolute bottom-4 left-6 right-6 bg-[#31394d] py-3 rounded-md items-center"
-            onPress={confirmCheckoutSelected}
-          >
-            <Text className="text-white text-lg font-bold">Checkout</Text>
-          </TouchableOpacity>
+          {/* Bottom Buttons */}
+          <View className="absolute bottom-4 left-6 right-6 flex-row space-x-3">
+            <TouchableOpacity
+              className="flex-1 bg-gray-300 py-3 rounded-md items-center"
+              onPress={removeSelectedItems}
+            >
+              <Text className="text-black text-base font-semibold">Remove</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="flex-1 bg-[#31394d] py-3 rounded-md items-center"
+              onPress={confirmCheckoutSelected}
+            >
+              <Text className="text-white text-base font-semibold">Checkout</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </SafeAreaView>
