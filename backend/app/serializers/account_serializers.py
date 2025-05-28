@@ -18,7 +18,3 @@ class CreateAccountSerializer(serializers.ModelSerializer):
     
     user.save()
     return user
-
-class LoginAccountSeralizer(serializers.ModelSerializer):
-  email = serializers.EmailField(required=True)
-  password = serializers.CharField(required=True, write_only=True)

@@ -2,30 +2,57 @@ import { View, Text, TextInput, Pressable, Switch, Platform } from 'react-native
 import { Controller, useForm } from 'react-hook-form';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import DatePicker from 'react-native-date-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { SignupSchema } from '@/form-schema/authSchema';
+import { signupSchema } from '@/form-schema/authSchema';
+import { useAddUserAccount } from './queries/authAdd';
 
-type SignupForm = z.infer<typeof SignupSchema>
+const GLOBAL_STYLE = {
+  view: 'w-full'
+}
+
+type SignupForm = z.infer<typeof signupSchema>
 
 export default function SignUp() {
   const router = useRouter();
-  const [birthDate, setBirthDate] = useState(new Date());
-  const [open, setOpen] = useState(false);
-  const { control, trigger } = useForm<SignupForm>({
-    resolver: zodResolver(SignupSchema),
+  const [showPicker, setShowPicker] = useState(false);
+  const { mutateAsync: addUserAccount } = useAddUserAccount();
+  const { control, getValues, trigger } = useForm<SignupForm>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       username: '',
       email: '',
       dateOfBirth: '',
       phone: '',
-      password: ''
+      password: '',
+      confirmPassword: ''
     }
   })
 
-  const handleLogin = () => {
-    
+  const handleLogin = async () => {
+    const formIsValid = await trigger(['username', 
+      'email', 'dateOfBirth', 'phone', 'password', 'confirmPassword']);
+
+    if(!formIsValid) {
+      console.log(getValues());
+      return;
+    }
+
+    try {
+      const values = getValues();
+      addUserAccount({
+        username: values.username,
+        email: values.email,
+        password: values.password
+      }, {
+        onSuccess: () => {
+          router.replace('/(auth)/login');
+        }
+      })
+    } catch (error) {
+
+    }
   };
 
   return (
@@ -45,14 +72,17 @@ export default function SignUp() {
         control={control}
         name='username'
         render={({field: { onChange, value }, fieldState: { error }}) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Username"
-            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-            keyboardType="default"
-            autoCapitalize="words"
-          />
+          <View className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Username"
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+              keyboardType="default"
+              autoCapitalize="words"
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
         )}
         
       />
@@ -61,66 +91,103 @@ export default function SignUp() {
         control={control}
         name='email'
         render={({field: { onChange, value }, fieldState: { error }}) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Email"
-            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View  className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Email"
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
         )}
       />
 
-      <Pressable
-        onPress={() => setOpen(true)}
-        className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-      >
-        <Text className="text-[13px]">{birthDate.toLocaleDateString()}</Text>
-      </Pressable>
+      <Controller 
+        control={control}
+        name='dateOfBirth'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <View className={GLOBAL_STYLE.view}>
+            <Pressable
+              onPress={() => setShowPicker(true)}
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+            >
+              <Text className="text-[16px]">
+                {value ? new Date(value).toLocaleDateString() : "Date of Birth"}
+              </Text>
+            </Pressable>
 
-      <DatePicker
-        modal
-        open={open}
-        date={birthDate}
-        mode="date"
-        maximumDate={new Date()}
-        onConfirm={(date) => {
-          setOpen(false);
-          setBirthDate(date);
-        }}
-        onCancel={() => {
-          setOpen(false);
-        }}
+            {showPicker && (
+              <DateTimePicker
+                testID="datePicker"
+                value={value ? new Date(value) : new Date()}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowPicker(false);
+                  if (selectedDate) {
+                    const dateStr = selectedDate.toISOString().split('T')[0];
+                    onChange(dateStr); 
+                  }
+                }}
+              />
+            )}
+          </View>
+        )}     
       />
       
       <Controller 
         control={control}
-        name='email'
+        name='phone'
         render={({field: { onChange, value }, fieldState: { error }}) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Phone Number"
-            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-            keyboardType="phone-pad"
-            secureTextEntry={false}
-          />
+          <View  className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Phone Number"
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+              keyboardType="phone-pad"
+              secureTextEntry={false}
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
         )}
       />
 
       <Controller 
         control={control}
-        name='email'
+        name='password'
         render={({field: { onChange, value }, fieldState: { error }}) => (
-          <TextInput
-            value={value}
-            onChangeText={onChange}
-            placeholder="Password"
-            className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
-            secureTextEntry={true}
-          />
+          <View className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Password"
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+              secureTextEntry={true}
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
+        )}
+      />
+
+      <Controller 
+        control={control}
+        name='confirmPassword'
+        render={({field: { onChange, value }, fieldState: { error }}) => (
+          <View className={GLOBAL_STYLE.view}>
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              placeholder="Confirm Password"
+              className="border font-poppins w-full max-w-md p-4 mb-2 text-base rounded border-[#edf1f3]"
+              secureTextEntry={true}
+            />
+            {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+          </View>
         )}
       />
 
