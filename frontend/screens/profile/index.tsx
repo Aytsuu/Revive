@@ -102,14 +102,15 @@ export default function Profile() {
 
         <View className="mb-8 space-y-4">
           {!editMode && (
-            <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
-              <Text
-                className="text-gray-800 font-semibold text-base"
-                onPress={() => router.push('/(product)/purchases')}
-              >
+            <TouchableOpacity
+              onPress={() => router.push('/(product)/purchases')}
+              className="bg-gray-200 py-3 rounded-xl items-center"
+            >
+              <Text className="text-gray-800 font-semibold text-base">
                 My Purchases
               </Text>
             </TouchableOpacity>
+
           )}
           <TouchableOpacity
             onPress={toggleEdit}

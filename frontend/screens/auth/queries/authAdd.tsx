@@ -3,11 +3,7 @@ import { addUserAccount, loginUserAccount } from '../rest_api/authPOST';
 
 export const useAddUserAccount = () => {
   return useMutation({
-    mutationFn: ({username, email, password} : {
-      username: string;
-      email: string;
-      password: string;
-    }) => addUserAccount(username, email, password)
+    mutationFn: ( data: Record<string, any>) => addUserAccount(data)
   })
 }
 

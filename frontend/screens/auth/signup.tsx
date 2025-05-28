@@ -41,11 +41,17 @@ export default function SignUp() {
 
     try {
       const values = getValues();
-      addUserAccount({
+
+      const data =  {
         username: values.username,
         email: values.email,
+        name: values.username,
+        dob: new Date(values.dateOfBirth).toISOString().split('T')[0],
+        contact: values.phone,
         password: values.password
-      }, {
+      }
+
+      addUserAccount( data, {
         onSuccess: () => {
           router.replace('/(auth)');
         }
