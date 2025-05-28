@@ -1,8 +1,10 @@
 import { Stack } from 'expo-router';
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // or any icon lib you prefer
+import { useRouter } from 'expo-router';
 
 export default function ProductLayout() {
+  const router = useRouter();
   return (
     <Stack>
       <Stack.Screen
@@ -26,7 +28,7 @@ export default function ProductLayout() {
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => console.log('Cart tapped')}
+              onPress={() => router.push('/(tabs)/cart')}
               style={{ marginRight: 15 }}
             >
               <Ionicons name="cart-outline" size={24} color="black" />
