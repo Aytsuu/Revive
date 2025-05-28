@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   Image,
@@ -64,11 +65,13 @@ export default function Purchases() {
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [feedback, setFeedback] = useState<string>("");
 
   const openRatingModal = (order: Order) => {
-    setSelectedOrder(order);
-    setSelectedRating(0);
-    setRatingModalVisible(true);
+  setSelectedOrder(order);
+  setSelectedRating(0);
+  setFeedback(""); // Clear feedback
+  setRatingModalVisible(true);
   };
 
   const handleAction = (status: string, name: string, order: Order) => {
@@ -89,10 +92,12 @@ export default function Purchases() {
   };
 
   const handleRatingSubmit = () => {
-    if (!selectedOrder) return;
-
-    Alert.alert("Thank you!", `You rated ${selectedOrder.name} with ${selectedRating} star(s).`);
+    if (selectedOrder) {
+      console.log("Rating:", selectedRating);
+      console.log("Feedback:", feedback); // optional feedback
+    }
     setRatingModalVisible(false);
+    setFeedback("");
   };
 
   const renderContent = () => {
@@ -133,8 +138,8 @@ export default function Purchases() {
               {order.status === "pending"
                 ? "Cancel"
                 : order.status === "toBeReceived"
-                ? "Mark as Received"
-                : "Rate"}
+                  ? "Mark as Received"
+                  : "Rate"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -160,14 +165,12 @@ export default function Purchases() {
               <TouchableOpacity
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key as any)}
-                className={`px-4 py-2 rounded-lg mx-1 ${
-                  isActive ? "bg-[#31394d]" : "bg-gray-100"
-                }`}
+                className={`px-4 py-2 rounded-lg mx-1 ${isActive ? "bg-[#31394d]" : "bg-gray-100"
+                  }`}
               >
                 <Text
-                  className={`font-semibold text-sm ${
-                    isActive ? "text-white" : "text-gray-800"
-                  }`}
+                  className={`font-semibold text-sm ${isActive ? "text-white" : "text-gray-800"
+                    }`}
                 >
                   {tab.title}
                 </Text>
@@ -187,9 +190,9 @@ export default function Purchases() {
       <Modal visible={ratingModalVisible} transparent animationType="slide">
         <View className="flex-1 justify-center items-center bg-black/50 px-8">
           <View className="bg-white rounded-xl p-6 w-full max-w-md">
-            <Text className="text-lg font-semibold mb-4 text-center">
-              Rate Order
-            </Text>
+            <Text className="text-lg font-semibold mb-4 text-center">Rate Order</Text>
+
+            {/* Star Rating */}
             <View className="flex-row justify-center mb-4">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Pressable key={star} onPress={() => setSelectedRating(star)}>
@@ -201,6 +204,18 @@ export default function Purchases() {
                 </Pressable>
               ))}
             </View>
+
+            {/* Feedback Input */}
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 text-sm mb-4"
+              placeholder="Optional feedback..."
+              value={feedback}
+              onChangeText={setFeedback}
+              multiline
+              numberOfLines={3}
+            />
+
+            {/* Buttons */}
             <View className="flex-row justify-end">
               <TouchableOpacity
                 className="bg-gray-200 px-4 py-2 rounded-lg mr-2"
