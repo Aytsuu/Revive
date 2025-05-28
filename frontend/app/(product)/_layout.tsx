@@ -36,6 +36,21 @@ export default function ProductLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="purchases"
+        options={{
+          title: 'My Purchases',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/cart')}
+              style={{ marginRight: 15 }}
+            >
+              <Ionicons name="cart-outline" size={24} color="black" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
     </Stack>
   );
 }
