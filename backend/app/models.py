@@ -13,9 +13,12 @@ class Account(AbstractUser):
 
 class Product(models.Model):
   prod_id = models.BigAutoField(primary_key=True)
+  prod_name = models.CharField(max_length=50)
   prod_details = models.TextField()
+  prod_price = models.FloatField()
   prod_quantity = models.IntegerField()
-  prod_image = models.TextField()
+  prod_brand = models.CharField(max_length=50)
+  prod_image = models.URLField(max_length=500, null=True, blank=True)
 
   class Meta:
     db_table = 'product'

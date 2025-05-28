@@ -90,6 +90,8 @@ export default function Inventory() {
       setProducts((prev) => [...prev, newProduct]);
     }
 
+    console.log(products)
+
     setModalVisible(false);
     setForm({});
     setIsEditMode(false);

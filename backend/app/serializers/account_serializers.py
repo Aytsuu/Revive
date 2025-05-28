@@ -19,3 +19,4 @@ class CreateAccountSerializer(serializers.ModelSerializer):
     
     user.save()
     return user
+  

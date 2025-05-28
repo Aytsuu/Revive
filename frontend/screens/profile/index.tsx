@@ -11,16 +11,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { useSelector } from 'react-redux';
+import { selectAccount } from '@/redux/accountSlice';
 
 export default function Profile() {
+  const accountData = useSelector(selectAccount)
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const router = useRouter();
-
-  const [name, setName] = useState('Marc Remigoso');
-  const [email, setEmail] = useState('marcusremigoso@gmail.com');
-  const [phone, setPhone] = useState('0917-123-4567');
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -63,39 +62,39 @@ export default function Profile() {
             <Text className="text-gray-500 text-sm">Name</Text>
             {editMode ? (
               <TextInput
-                value={name}
-                onChangeText={setName}
+                value={accountData.name}
+                onChangeText={() => {}}
                 className="border-b border-gray-300 text-lg font-semibold py-1"
               />
             ) : (
-              <Text className="text-lg font-semibold">{name}</Text>
+              <Text className="text-lg font-semibold">{accountData.name}</Text>
             )}
           </View>
           <View>
             <Text className="text-gray-500 text-sm">Email</Text>
             {editMode ? (
               <TextInput
-                value={email}
-                onChangeText={setEmail}
+                value={accountData.email}
+                onChangeText={() => {}}
                 className="border-b border-gray-300 text-lg font-semibold py-1"
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
             ) : (
-              <Text className="text-lg font-semibold">{email}</Text>
+              <Text className="text-lg font-semibold">{accountData.email}</Text>
             )}
           </View>
           <View>
-            <Text className="text-gray-500 text-sm">Phone#</Text>
+            <Text className="text-gray-500 text-sm">Phone (#)</Text>
             {editMode ? (
               <TextInput
-                value={phone}
-                onChangeText={setPhone}
+                value={accountData.phone}
+                onChangeText={() => {}}
                 className="border-b border-gray-300 text-lg font-semibold py-1"
                 keyboardType="phone-pad"
               />
             ) : (
-              <Text className="text-lg font-semibold">{phone}</Text>
+              <Text className="text-lg font-semibold">{accountData.phone}</Text>
             )}
           </View>
         </View>
