@@ -101,6 +101,11 @@ export default function Profile() {
       </View>
 
       <View className="mt-10 space-y-4">
+        {!editMode && (
+          <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
+            <Text className="text-gray-800 font-semibold text-base">My Purchases</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={toggleEdit}
           className="bg-[#31394d] py-3 rounded-xl items-center"
@@ -109,11 +114,6 @@ export default function Profile() {
             {editMode ? 'Save Changes' : 'Edit Profile'}
           </Text>
         </TouchableOpacity>
-        {!editMode && (
-          <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
-            <Text className="text-gray-800 font-semibold text-base">Purchase History</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </SafeAreaView>
   );
