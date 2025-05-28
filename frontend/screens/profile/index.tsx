@@ -9,12 +9,14 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function Profile() {
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const router = useRouter();
 
   const [name, setName] = useState('Marc Remigoso');
   const [email, setEmail] = useState('marcusremigoso@gmail.com');
@@ -101,7 +103,12 @@ export default function Profile() {
         <View className="mb-8 space-y-4">
           {!editMode && (
             <TouchableOpacity className="bg-gray-200 py-3 rounded-xl items-center">
-              <Text className="text-gray-800 font-semibold text-base">My Purchases</Text>
+              <Text
+                className="text-gray-800 font-semibold text-base"
+                onPress={() => router.push('/(product)/purchases')}
+                >
+                My Purchases
+              </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
