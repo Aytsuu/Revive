@@ -47,7 +47,7 @@ export default function SignUp() {
         password: values.password
       }, {
         onSuccess: () => {
-          router.replace('/(auth)/login');
+          router.replace('/(auth)');
         }
       })
     } catch (error) {
@@ -61,7 +61,7 @@ export default function SignUp() {
 
       <View className="flex flex-row flex-nowrap gap-2 self-start">
         <Text className="text-base font-bold mb-4 font-poppins text-[#6c7278]">Already have an account?</Text>
-        <Pressable onPress={() => router.push('/login')}>
+        <Pressable onPress={() => router.back()}>
           <Text className="text-base font-bold mb-4 font-poppins text-[#4d81e7]">
             Log In
           </Text>

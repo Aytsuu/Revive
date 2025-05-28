@@ -6,7 +6,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/form-schema/authSchema';
 import { useLoginUserAccount } from './queries/authAdd';
-import { Control } from 'react-hook-form';
 
 const GLOBAL_STYLE = {
   view: 'w-full',
@@ -41,7 +40,7 @@ export default () => {
       password: values.password
     }, {
       onSuccess: (result) => {
-        router.replace('/(tabs)/home');
+        router.replace('/(tabs)');
       },
       onError: (err) => {
         console.log(err.message.split(' ').at(-1));

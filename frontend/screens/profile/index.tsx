@@ -106,7 +106,7 @@ export default function Profile() {
               <Text
                 className="text-gray-800 font-semibold text-base"
                 onPress={() => router.push('/(product)/purchases')}
-                >
+              >
                 My Purchases
               </Text>
             </TouchableOpacity>
