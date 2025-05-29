@@ -8,6 +8,9 @@ import {
   Image,
   Modal,
   Alert,
+  SafeAreaView,
+  Keyboard,
+  TouchableWithoutFeedback
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Entypo, AntDesign } from "@expo/vector-icons";
@@ -55,6 +58,7 @@ export default () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openAddModal = () => {
+    setForm({});
     setIsEditMode(false);
     setModalVisible(true);
   };
@@ -208,7 +212,8 @@ export default () => {
   if(isLoading) return;
 
   return (
-    <View className="flex-1 bg-gray-50 p-4">
+    <SafeAreaView className="flex-1">
+      <View className="flex-1 bg-gray-50 p-4">
 
       <FlatList
         data={products ?? []}
@@ -243,29 +248,30 @@ export default () => {
         }
       />
 
-      <TouchableOpacity
-        onPress={openAddModal}
-        className="absolute bottom-8 right-8 bg-blue-700 rounded-full p-4 shadow-lg"
-      >
-        <MaterialIcons name="add" size={28} color="white" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={openAddModal}
+          className="absolute bottom-8 right-8 bg-blue-700 rounded-full p-4 shadow-lg"
+        >
+          <MaterialIcons name="add" size={28} color="white" />
+        </TouchableOpacity>
 
-      {/* Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View className="flex-1 bg-black/50 justify-center items-center px-4">
-          <View className="bg-white w-full max-w-md rounded-lg p-6">
-            <Text className="text-xl font-semibold mb-4 text-center">
-              {isEditMode ? "Update Product" : "Add Product"}
-            </Text>
+        {/* Modal */}
+        <Modal visible={modalVisible} transparent animationType="slide">
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View className="flex-1 bg-black/50 justify-center items-center px-4">
+              <View className="bg-white w-full max-w-md rounded-lg p-6">
+                <Text className="text-xl font-semibold mb-4 text-center">
+                  {isEditMode ? "Update Product" : "Add Product"}
+                </Text>
 
-            {/* Upload Image Button */}
-            <TouchableOpacity
-              onPress={handlePickImage}
-              className="flex-row items-center space-x-2 mb-4"
-            >
-              <AntDesign name="camera" size={20} color="#2563eb" />
-              <Text className="text-blue-600 underline">Choose Photo</Text>
-            </TouchableOpacity>
+                {/* Upload Image Button */}
+                <TouchableOpacity
+                  onPress={handlePickImage}
+                  className="flex-row items-center space-x-2 mb-4"
+                >
+                  <AntDesign name="camera" size={20} color="#2563eb" />
+                  <Text className="text-blue-600 underline">Choose Photo</Text>
+                </TouchableOpacity>
 
             {/* Preview */}
             {photo && (
