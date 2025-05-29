@@ -8,10 +8,10 @@ import {
   Image,
   Modal,
   Alert,
-  SafeAreaView,
   Keyboard,
   TouchableWithoutFeedback
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Entypo, AntDesign } from "@expo/vector-icons";
 import { Controller } from "react-hook-form";
@@ -38,6 +38,7 @@ type Product = {
 };
 
 export default () => {
+  const insets = useSafeAreaInsets();
   const { data: products, isLoading } = useGetProduct();
   const { mutateAsync: updateProduct } = useUpdateProduct();
   const { mutateAsync: addProduct } = useAddProduct();
@@ -58,7 +59,6 @@ export default () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openAddModal = () => {
-    setForm({});
     setIsEditMode(false);
     setModalVisible(true);
   };
@@ -209,48 +209,47 @@ export default () => {
     ]);
   };
 
-  if(isLoading) return;
-
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1 bg-gray-50 p-4">
 
-      <FlatList
-        data={products ?? []}
-        keyExtractor={(item: Product) => item.prod_id}
-        renderItem={({ item }: { item: Product }) => (
-          <View className="flex-row items-center justify-between bg-white p-4 mb-2 rounded-lg shadow border border-gray-200">
-            {item.prod_image && (
-              <Image 
-                source={{ uri: item.prod_image }} 
-                className="w-16 h-16 rounded-md" 
-                resizeMode="cover" 
-              />
-            )}
-            <View className="flex-1 ml-4">
-              <Text className="font-bold text-lg">{item.prod_name}</Text>
-              <Text className="text-gray-700">
-                ₱{item.prod_price} • Qty: {item.prod_stock}
-              </Text>
+        <FlatList
+          data={products ?? []}
+          keyExtractor={(item: Product) => item.prod_id}
+          renderItem={({ item }: { item: Product }) => (
+            <View className="flex-row items-center justify-between bg-white p-4 mb-2 rounded-lg shadow border border-gray-200">
+              {item.prod_image && (
+                <Image 
+                  source={{ uri: item.prod_image }} 
+                  className="w-16 h-16 rounded-md" 
+                  resizeMode="cover" 
+                />
+              )}
+              <View className="flex-1 ml-4">
+                <Text className="font-bold text-lg">{item.prod_name}</Text>
+                <Text className="text-gray-700">
+                  ₱{item.prod_price} • Qty: {item.prod_stock}
+                </Text>
+              </View>
+              <View className="flex-row space-x-3">
+                <TouchableOpacity onPress={() => openEditModal(item.prod_id)}>
+                  <MaterialIcons name="edit" size={24} color="#f59e0b" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleRemoveProduct(item.prod_id)}>
+                  <Entypo name="trash" size={24} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View className="flex-row space-x-3">
-              <TouchableOpacity onPress={() => openEditModal(item.prod_id)}>
-                <MaterialIcons name="edit" size={24} color="#f59e0b" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleRemoveProduct(item.prod_id)}>
-                <Entypo name="trash" size={24} color="#ef4444" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text className="text-center text-gray-400 mt-8">No products found.</Text>
-        }
-      />
+          )}
+          ListEmptyComponent={
+            <Text className="text-center text-gray-400 mt-8">No products found.</Text>
+          }
+        />
 
         <TouchableOpacity
           onPress={openAddModal}
-          className="absolute bottom-8 right-8 bg-blue-700 rounded-full p-4 shadow-lg"
+          className="absolute right-8 bg-blue-700 rounded-full p-4 shadow-lg"
+          style={{ bottom: 32 + insets.bottom }} // 32px above tab bar + safe area
         >
           <MaterialIcons name="add" size={28} color="white" />
         </TouchableOpacity>
@@ -259,142 +258,144 @@ export default () => {
         <Modal visible={modalVisible} transparent animationType="slide">
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View className="flex-1 bg-black/50 justify-center items-center px-4">
-              <View className="bg-white w-full max-w-md rounded-lg p-6">
-                <Text className="text-xl font-semibold mb-4 text-center">
-                  {isEditMode ? "Update Product" : "Add Product"}
-                </Text>
+                <View className="bg-white w-full max-w-md rounded-lg p-6">
+                  <Text className="text-xl font-semibold mb-4 text-center">
+                    {isEditMode ? "Update Product" : "Add Product"}
+                  </Text>
 
-                {/* Upload Image Button */}
-                <TouchableOpacity
-                  onPress={handlePickImage}
-                  className="flex-row items-center space-x-2 mb-4"
-                >
-                  <AntDesign name="camera" size={20} color="#2563eb" />
-                  <Text className="text-blue-600 underline">Choose Photo</Text>
-                </TouchableOpacity>
+                  {/* Upload Image Button */}
+                  <TouchableOpacity
+                    onPress={handlePickImage}
+                    className="flex-row items-center space-x-2 mb-4"
+                  >
+                    <AntDesign name="camera" size={20} color="#2563eb" />
+                    <Text className="text-blue-600 underline">Choose Photo</Text>
+                  </TouchableOpacity>
 
-            {/* Preview */}
-            {photo && (
-              <Image
-                source={{ uri: photo.uri }}
-                className="w-full h-40 rounded-md mb-4"
-                resizeMode="cover"
+              {/* Preview */}
+              {photo && (
+                <Image
+                  source={{ uri: photo.uri }}
+                  className="w-full h-40 rounded-md mb-4"
+                  resizeMode="cover"
+                />
+              )} 
+
+              {/* Product Name */}
+              <Controller 
+                control={control}
+                name="prod_name"
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">Product Name</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="default"
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
               />
-            )} 
 
-            {/* Product Name */}
-            <Controller 
-              control={control}
-              name="prod_name"
-              render={({ field: {onChange, value}, fieldState: {error}}) => (
-                <View className="mb-4">
-                  <Text className="mb-1 text-sm font-medium">Product Name</Text>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="default"
-                    className="border border-gray-300 rounded-md p-2"
-                  />
-                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                </View>
-              )}
-            />
+              {/* Details */}
+              <Controller 
+                control={control}
+                name="prod_details"
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">Details</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="default"
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
+              />
 
-            {/* Details */}
-            <Controller 
-              control={control}
-              name="prod_details"
-              render={({ field: {onChange, value}, fieldState: {error}}) => (
-                <View className="mb-4">
-                  <Text className="mb-1 text-sm font-medium">Details</Text>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="default"
-                    className="border border-gray-300 rounded-md p-2"
-                  />
-                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                </View>
-              )}
-            />
+              {/* Brand */}
+              <Controller 
+                control={control}
+                name="prod_brand"
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">Brand</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="default"
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
+              />
 
-            {/* Brand */}
-            <Controller 
-              control={control}
-              name="prod_brand"
-              render={({ field: {onChange, value}, fieldState: {error}}) => (
-                <View className="mb-4">
-                  <Text className="mb-1 text-sm font-medium">Brand</Text>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="default"
-                    className="border border-gray-300 rounded-md p-2"
-                  />
-                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                </View>
-              )}
-            />
+              {/* Price */}
+              <Controller 
+                control={control}
+                name="prod_price"
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">Price</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="numeric"
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
+              />
 
-            {/* Price */}
-            <Controller 
-              control={control}
-              name="prod_price"
-              render={({ field: {onChange, value}, fieldState: {error}}) => (
-                <View className="mb-4">
-                  <Text className="mb-1 text-sm font-medium">Price</Text>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="numeric"
-                    className="border border-gray-300 rounded-md p-2"
-                  />
-                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                </View>
-              )}
-            />
+              {/* Stock */}
+              <Controller 
+                control={control}
+                name="prod_stock"
+                render={({ field: {onChange, value}, fieldState: {error}}) => (
+                  <View className="mb-4">
+                    <Text className="mb-1 text-sm font-medium">Stock</Text>
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="numeric"
+                      className="border border-gray-300 rounded-md p-2"
+                    />
+                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                  </View>
+                )}
+              />
 
-            {/* Stock */}
-            <Controller 
-              control={control}
-              name="prod_stock"
-              render={({ field: {onChange, value}, fieldState: {error}}) => (
-                <View className="mb-4">
-                  <Text className="mb-1 text-sm font-medium">Stock</Text>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    keyboardType="numeric"
-                    className="border border-gray-300 rounded-md p-2"
-                  />
-                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                </View>
-              )}
-            />
-
-            <View className="flex-row justify-end space-x-4 mt-2">
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  setIsEditMode(false);
-                  setEditingId(null);
-                }}
-                className="px-4 py-2 rounded-md bg-gray-300"
-              >
-                <Text>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={submit}
-                className="px-4 py-2 rounded-md bg-blue-700"
-              >
-                <Text className="text-white font-semibold">
-                  {isEditMode ? "Update" : "Add"}
-                </Text>
-              </TouchableOpacity>
+              <View className="flex-row justify-end space-x-4 mt-2">
+                <TouchableOpacity
+                  onPress={() => {
+                    setModalVisible(false);
+                    setIsEditMode(false);
+                    setEditingId(null);
+                  }}
+                  className="px-4 py-2 rounded-md bg-gray-300"
+                >
+                  <Text>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={submit}
+                  className="px-4 py-2 rounded-md bg-blue-700"
+                >
+                  <Text className="text-white font-semibold">
+                    {isEditMode ? "Update" : "Add"}
+                  </Text>
+                </TouchableOpacity>
+              </View>   
             </View>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
+  </SafeAreaView>
   );
 }
