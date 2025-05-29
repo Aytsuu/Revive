@@ -14,13 +14,6 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { MaterialIcons, Entypo, AntDesign } from "@expo/vector-icons";
-import { Controller } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { productFormSchema } from "@/form-schema/productSchema";
-
-type productForm = z.infer<typeof productFormSchema>
 
 type Product = {
   id: string;
@@ -32,24 +25,7 @@ type Product = {
   brand: string;
 };
 
-const fields = [{ key: "name", label: "Product Name", keyboardType: "default" },
-              { key: "brand", label: "Brand", keyboardType: "default" },
-              { key: "color", label: "Color", keyboardType: "default" },
-              { key: "price", label: "Price", keyboardType: "numeric" },
-              { key: "quantity", label: "Quantity", keyboardType: "numeric" },
-            ]
-
-export default () => {
-  const {control, trigger, getValues} = useForm<productForm>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: {
-      name: '',
-      brand: '',
-      color: '',
-      price: '',
-      quantity: ''
-    }
-  });
+export default function Inventory() {
   const [products, setProducts] = useState<Product[]>([
     {
       id: "1",
@@ -63,16 +39,19 @@ export default () => {
   ]);
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState<Partial<Product>>({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openAddModal = () => {
+    setForm({});
     setIsEditMode(false);
     setEditingId(null);
     setModalVisible(true);
   };
 
   const openEditModal = (product: Product) => {
+    setForm(product);
     setIsEditMode(true);
     setEditingId(product.id);
     setModalVisible(true);
@@ -87,20 +66,35 @@ export default () => {
 
     if (!result.canceled && result.assets.length > 0) {
       const selectedImage = result.assets[0];
-      
+      setForm((prev) => ({ ...prev, image: { uri: selectedImage.uri } }));
     }
   };
 
   const handleSaveProduct = () => {
-    if (isEditMode && editingId) {
-      
-    } else {
-      
+    if (!form.name || !form.brand || !form.price || !form.image) {
+      Alert.alert("Error", "Please fill all fields and select an image.");
+      return;
     }
 
-    console.log(products)
+    if (isEditMode && editingId) {
+      setProducts((prev) =>
+        prev.map((p) => (p.id === editingId ? { ...p, ...form } as Product : p))
+      );
+    } else {
+      const newProduct: Product = {
+        id: Date.now().toString(),
+        name: form.name!,
+        brand: form.brand!,
+        price: form.price!,
+        quantity: form.quantity ?? 1,
+        color: form.color ?? "Black",
+        image: form.image!,
+      };
+      setProducts((prev) => [...prev, newProduct]);
+    }
 
     setModalVisible(false);
+    setForm({});
     setIsEditMode(false);
     setEditingId(null);
   };
