@@ -16,62 +16,63 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { productFormSchema } from "@/form-schema/productSchema";
+import { supabase } from "@/utils/supabase";
+import * as ImageManipulator from 'expo-image-manipulator';
+import { useAddProduct } from "./queries/inventoryAdd";
+import { useGetProduct } from "./queries/inventoryFetch";
+import { useUpdateProduct } from "./queries/inventoryUpdate";
 
 type productForm = z.infer<typeof productFormSchema>
 
 type Product = {
-  id: string;
-  name: string;
-  image: any;
-  quantity: number;
-  color: string;
-  price: number;
-  brand: string;
+  prod_id: string;
+  prod_name: string;
+  prod_details: string;
+  prod_brand: string;
+  prod_price: string;
+  prod_stock: string;
+  prod_image?: string; 
 };
 
-const fields = [{ key: "name", label: "Product Name", keyboardType: "default" },
-              { key: "brand", label: "Brand", keyboardType: "default" },
-              { key: "color", label: "Color", keyboardType: "default" },
-              { key: "price", label: "Price", keyboardType: "numeric" },
-              { key: "quantity", label: "Quantity", keyboardType: "numeric" },
-            ]
-
 export default () => {
-  const {control, trigger, getValues} = useForm<productForm>({
+  const { data: products, isLoading } = useGetProduct();
+  const { mutateAsync: updateProduct } = useUpdateProduct();
+  const { mutateAsync: addProduct } = useAddProduct();
+  const {control, trigger, getValues, setValue} = useForm<productForm>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
-      name: '',
-      brand: '',
-      color: '',
-      price: '',
-      quantity: ''
+      prod_name: '',
+      prod_details: '',
+      prod_brand: '',
+      prod_price: '',
+      prod_stock: ''
     }
   });
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: "1",
-      name: "Phone 1",
-      image: require("../../assets/images/phone1.jpg"),
-      quantity: 1,
-      color: "Red",
-      price: 599,
-      brand: "Apple",
-    },
-  ]);
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>();
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const openAddModal = () => {
     setIsEditMode(false);
-    setEditingId(null);
     setModalVisible(true);
   };
 
-  const openEditModal = (product: Product) => {
+  const openEditModal = (id: any) => {
+
+    const product = products.find((prod: any) => prod.prod_id == id)
+
+    setValue('prod_name', product.prod_name);
+    setValue('prod_details', product.prod_details);
+    setValue('prod_brand', product.prod_brand);
+    setValue('prod_price', String(product.prod_price));
+    setValue('prod_stock', String(product.prod_stock));
+
+    console.log(getValues());
+
     setIsEditMode(true);
-    setEditingId(product.id);
+    setEditingId(id);
     setModalVisible(true);
   };
 
@@ -83,23 +84,112 @@ export default () => {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const selectedImage = result.assets[0];
-      
+      const image = result.assets[0];
+      setPhoto(image);
     }
   };
 
-  const handleSaveProduct = () => {
-    if (isEditMode && editingId) {
-      
-    } else {
-      
+  const getUint8Array = async () => {
+    if(!photo) return;
+
+    const compressedImage = await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{resize: {width: 1200, height: 1080}}],
+        {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true
+        }
+      )
+
+      if(!compressedImage.base64) {
+        throw new Error("Compressed image base64 data is undefined")
+      }
+
+      // Convert Base64 to Uint8Array correctly
+      const binaryString = atob(compressedImage.base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      return bytes;
+  }
+
+  const storePhoto = async () => {
+    const base64 = await getUint8Array();
+    const fileName = `${Date.now()}-${Math.floor(Math.random() * 1e9)}.jpg`;
+    const filePath = `product/${fileName}`;
+
+
+    if(!base64) return;
+
+    const { error } = await supabase.storage
+      .from("images")
+      .upload(filePath, base64, {
+        contentType: "image/jpeg",
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Upload error:", error); // Log detailed error
+      Alert.alert("Upload failed", error.message);
+      return;
     }
 
-    console.log(products)
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("images").getPublicUrl(filePath);
 
-    setModalVisible(false);
-    setIsEditMode(false);
-    setEditingId(null);
+    console.log("Upload successful! URL:", publicUrl);
+    return publicUrl;
+  }
+
+  const submit = async () => {
+    const formIsValid = await trigger(['prod_name', 'prod_brand', 'prod_price', 
+      'prod_stock', 'prod_details']);
+
+    console.log(formIsValid);
+    if(!formIsValid) {
+      return;
+    }
+
+    if(!photo) {
+      Alert.alert('Select a photo.')
+      return;
+    }
+
+    const values = getValues();
+    if (isEditMode && editingId) {
+
+      updateProduct(photo ? 
+        {...values, prod_image: await storePhoto()} : values, {
+          onSuccess: () => {
+            Alert.alert("Success", "product updated successfully!");
+            setIsEditMode(false);
+            setEditingId(null);
+            setPhoto(null);
+            setModalVisible(false);
+        }
+      })
+      
+    } else {
+  
+      try {
+        
+        addProduct({...values, prod_image: await storePhoto()}, {
+          onSuccess: () => {
+            Alert.alert("Success", "product added successfully!");
+            setModalVisible(false);
+            setPhoto(null)
+          }
+        });
+        
+      } catch (err) {
+        throw err;
+      }
+    }
   };
 
   const handleRemoveProduct = (id: string) => {
@@ -108,42 +198,46 @@ export default () => {
       {
         text: "Remove",
         onPress: () => {
-          setProducts((prev) => prev.filter((p) => p.id !== id));
+          
         },
         style: "destructive",
       },
     ]);
   };
 
-  const renderItem = ({ item }: { item: Product }) => (
-    <View className="flex-row items-center justify-between bg-white p-4 mb-2 rounded-lg shadow border border-gray-200">
-      <View className="flex-row items-center space-x-4">
-        <Image source={item.image} className="w-16 h-16 rounded-md" resizeMode="cover" />
-        <View>
-          <Text className="font-bold text-lg">{item.name}</Text>
-          <Text className="text-gray-500">{item.brand} • {item.color}</Text>
-          <Text className="text-gray-700">₱{item.price} • Qty: {item.quantity}</Text>
-        </View>
-      </View>
-
-      <View className="flex-row space-x-3">
-        <TouchableOpacity onPress={() => openEditModal(item)}>
-          <MaterialIcons name="edit" size={24} color="#f59e0b" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleRemoveProduct(item.id)}>
-          <Entypo name="trash" size={24} color="#ef4444" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  if(isLoading) return;
 
   return (
     <View className="flex-1 bg-gray-50 p-4">
 
       <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+        data={products ?? []}
+        keyExtractor={(item: Product) => item.prod_id}
+        renderItem={({ item }: { item: Product }) => (
+          <View className="flex-row items-center justify-between bg-white p-4 mb-2 rounded-lg shadow border border-gray-200">
+            {item.prod_image && (
+              <Image 
+                source={{ uri: item.prod_image }} 
+                className="w-16 h-16 rounded-md" 
+                resizeMode="cover" 
+              />
+            )}
+            <View className="flex-1 ml-4">
+              <Text className="font-bold text-lg">{item.prod_name}</Text>
+              <Text className="text-gray-700">
+                ₱{item.prod_price} • Qty: {item.prod_stock}
+              </Text>
+            </View>
+            <View className="flex-row space-x-3">
+              <TouchableOpacity onPress={() => openEditModal(item.prod_id)}>
+                <MaterialIcons name="edit" size={24} color="#f59e0b" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleRemoveProduct(item.prod_id)}>
+                <Entypo name="trash" size={24} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         ListEmptyComponent={
           <Text className="text-center text-gray-400 mt-8">No products found.</Text>
         }
@@ -174,34 +268,103 @@ export default () => {
             </TouchableOpacity>
 
             {/* Preview */}
-            {/* {form.image && (
+            {photo && (
               <Image
-                source={}
+                source={{ uri: photo.uri }}
                 className="w-full h-40 rounded-md mb-4"
                 resizeMode="cover"
               />
-            )} */}
+            )} 
 
-            {/* Inputs with labels */}
-            {fields.map(({ key, label, keyboardType }) => (
-              <Controller 
-                key={key}
-                control={control}
-                name={key as 'name' | 'brand' | 'color' | 'price' | 'quantity' }
-                render={({ field: {onChange, value}, fieldState: {error}}) => (
-                  <View key={key} className="mb-4">
-                    <Text className="mb-1 text-sm font-medium">{label}</Text>
-                    <TextInput
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType={keyboardType as any}
-                      className="border border-gray-300 rounded-md p-2"
-                    />
-                    {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
-                  </View>
-                )}
-              />
-            ))}
+            {/* Product Name */}
+            <Controller 
+              control={control}
+              name="prod_name"
+              render={({ field: {onChange, value}, fieldState: {error}}) => (
+                <View className="mb-4">
+                  <Text className="mb-1 text-sm font-medium">Product Name</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="default"
+                    className="border border-gray-300 rounded-md p-2"
+                  />
+                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                </View>
+              )}
+            />
+
+            {/* Details */}
+            <Controller 
+              control={control}
+              name="prod_details"
+              render={({ field: {onChange, value}, fieldState: {error}}) => (
+                <View className="mb-4">
+                  <Text className="mb-1 text-sm font-medium">Details</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="default"
+                    className="border border-gray-300 rounded-md p-2"
+                  />
+                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                </View>
+              )}
+            />
+
+            {/* Brand */}
+            <Controller 
+              control={control}
+              name="prod_brand"
+              render={({ field: {onChange, value}, fieldState: {error}}) => (
+                <View className="mb-4">
+                  <Text className="mb-1 text-sm font-medium">Brand</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="default"
+                    className="border border-gray-300 rounded-md p-2"
+                  />
+                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                </View>
+              )}
+            />
+
+            {/* Price */}
+            <Controller 
+              control={control}
+              name="prod_price"
+              render={({ field: {onChange, value}, fieldState: {error}}) => (
+                <View className="mb-4">
+                  <Text className="mb-1 text-sm font-medium">Price</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="numeric"
+                    className="border border-gray-300 rounded-md p-2"
+                  />
+                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                </View>
+              )}
+            />
+
+            {/* Stock */}
+            <Controller 
+              control={control}
+              name="prod_stock"
+              render={({ field: {onChange, value}, fieldState: {error}}) => (
+                <View className="mb-4">
+                  <Text className="mb-1 text-sm font-medium">Stock</Text>
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="numeric"
+                    className="border border-gray-300 rounded-md p-2"
+                  />
+                  {error && <Text className="text-red-500 text-xs">{error.message}</Text>}
+                </View>
+              )}
+            />
 
             <View className="flex-row justify-end space-x-4 mt-2">
               <TouchableOpacity
@@ -215,7 +378,7 @@ export default () => {
                 <Text>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleSaveProduct}
+                onPress={submit}
                 className="px-4 py-2 rounded-md bg-blue-700"
               >
                 <Text className="text-white font-semibold">

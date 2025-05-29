@@ -16,7 +16,7 @@ class Product(models.Model):
   prod_name = models.CharField(max_length=50)
   prod_details = models.TextField()
   prod_price = models.FloatField()
-  prod_quantity = models.IntegerField()
+  prod_stock = models.IntegerField()
   prod_brand = models.CharField(max_length=50)
   prod_image = models.URLField(max_length=500, null=True, blank=True)
 
