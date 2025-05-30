@@ -25,7 +25,7 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Provider store={store}>
           <QueryClientProvider client={queryClient}>
-            <Stack initialRouteName='(tabs)'>
+            <Stack initialRouteName='(auth)'>
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(product)" options={{ headerShown: false }} />
