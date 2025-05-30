@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -40,11 +40,20 @@ type Product = {
 
 export default () => {
   const insets = useSafeAreaInsets();
-  const { data: products, isLoading } = useGetProduct();
+  const { data: fetchedProducts, isLoading } = useGetProduct();
+  const [localProducts, setLocalProducts] = useState<Product[]>([]);
+  
+  // Sync fetched products with local state
+  useEffect(() => {
+    if (fetchedProducts) {
+      setLocalProducts(fetchedProducts);
+    }
+  }, [fetchedProducts]);
+
   const { mutateAsync: addProduct } = useAddProduct();
   const { mutateAsync: updateProduct } = useUpdateProduct();
   const { mutateAsync: deleteProduct } = useDeleteProduct();
-  const {control, trigger, getValues, setValue} = useForm<productForm>({
+  const {control, trigger, getValues, setValue, reset} = useForm<productForm>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       prod_name: '',
@@ -62,21 +71,23 @@ export default () => {
   const [editingPhoto, setEditingPhoto] = useState<string | null>(null);
 
   const openAddModal = () => {
+    reset(); // Reset form fields
+    setPhoto(null);
     setIsEditMode(false);
     setModalVisible(true);
   };
 
-  const openEditModal = (id: any) => {
-
-    const product = products.find((prod: any) => prod.prod_id == id)
+  const openEditModal = (id: string) => {
+    const product = localProducts.find((prod) => prod.prod_id === id);
+    if (!product) return;
 
     setValue('prod_name', product.prod_name);
     setValue('prod_details', product.prod_details);
     setValue('prod_brand', product.prod_brand);
-    setValue('prod_price', String(product.prod_price));
-    setValue('prod_stock', String(product.prod_stock));
-    setPhoto(product.prod_image);
-    setEditingPhoto(product.prod_image);
+    setValue('prod_price', product.prod_price);
+    setValue('prod_stock', product.prod_stock);
+    setPhoto(product.prod_image || null);
+    setEditingPhoto(product.prod_image || null);
 
     setIsEditMode(true);
     setEditingId(id);
@@ -157,50 +168,76 @@ export default () => {
     const formIsValid = await trigger(['prod_name', 'prod_brand', 'prod_price', 
       'prod_stock', 'prod_details']);
 
-    console.log(formIsValid);
-    if(!formIsValid) {
-      return;
-    }
-
-    if(!photo) {
-      Alert.alert('Select a photo.')
+    if (!formIsValid) return;
+    if (!photo) {
+      Alert.alert('Select a photo.');
       return;
     }
 
     const values = getValues();
+    
     if (isEditMode && editingId) {
-
-      updateProduct({
-          data: {...values, prod_image: photo == editingPhoto ? 
-            photo : await storePhoto()
-          },
-          prodId: editingId
-        }, {
-          onSuccess: () => {
-            Alert.alert("Success", "product updated successfully!");
-            setIsEditMode(false);
-            setEditingId(null);
-            setPhoto(null);
-            setModalVisible(false);
-        }
-      })
+      // Optimistic update
+      const updatedProduct = {
+        ...values,
+        prod_id: editingId,
+        prod_image: photo,
+      };
       
-    } else {
-  
+      setLocalProducts(prev => prev.map(p => 
+        p.prod_id === editingId ? updatedProduct : p
+      ));
+
       try {
-        
-        addProduct({...values, prod_image: await storePhoto()}, {
-          onSuccess: () => {
-            Alert.alert("Success", "product added successfully!");
-            setModalVisible(false);
-            setPhoto(null)
-          }
+        const imageUrl = photo === editingPhoto ? photo : await storePhoto();
+        await updateProduct({
+          data: {...values, prod_image: imageUrl},
+          prodId: editingId
         });
         
-      } catch (err) {
-        throw err;
+        Alert.alert("Success", "Product updated successfully!");
+      } catch (error) {
+        // Rollback on error
+        setLocalProducts(fetchedProducts || []);
+        Alert.alert("Error", "Failed to update product");
+      }
+    } else {
+      // Optimistic add
+      const tempId = `temp-${Date.now()}`;
+      const newProduct = {
+        ...values,
+        prod_id: tempId,
+        prod_image: photo,
+      };
+      
+      setLocalProducts(prev => [...prev, newProduct]);
+
+      try {
+        const imageUrl = await storePhoto();
+        const response = await addProduct({
+          ...values, 
+          prod_image: imageUrl
+        });
+        
+        // Replace temp product with server response
+        setLocalProducts(prev => prev.map(p => 
+          p.prod_id === tempId ? { ...p, ...response, prod_id: response.prod_id } : p
+        ));
+        
+        Alert.alert("Success", "Product added successfully!");
+      } catch (error) {
+        // Rollback on error
+        setLocalProducts(prev => prev.filter(p => p.prod_id !== tempId));
+        Alert.alert("Error", "Failed to add product");
       }
     }
+    
+    // Reset modal
+    reset();
+    setPhoto(null);
+    setModalVisible(false);
+    setIsEditMode(false);
+    setEditingId(null);
   };
 
   const handleRemoveProduct = (id: string) => {
@@ -208,12 +245,20 @@ export default () => {
       { text: "Cancel", style: "cancel" },
       {
         text: "Remove",
-        onPress: () => {
-          deleteProduct(id, {
-            onSuccess: () => {
-              Alert.alert("Success", "product removed successfully!");
+        onPress: async () => {
+          // Optimistic removal
+          const removedProduct = localProducts.find(p => p.prod_id === id);
+          setLocalProducts(prev => prev.filter(p => p.prod_id !== id));
+          
+          try {
+            await deleteProduct(id);
+          } catch (error) {
+            // Rollback on error
+            if (removedProduct) {
+              setLocalProducts(prev => [...prev, removedProduct]);
             }
-          })
+            Alert.alert("Error", "Failed to remove product");
+          }
         },
         style: "destructive",
       },
@@ -223,9 +268,8 @@ export default () => {
   return (
     <SafeAreaView className="flex-1">
       <View className="flex-1 bg-gray-50 p-4">
-
         <FlatList
-          data={products ?? []}
+          data={localProducts}
           keyExtractor={(item: Product) => item.prod_id}
           renderItem={({ item }: { item: Product }) => (
             <View className="flex-row items-center justify-between bg-white p-4 mb-2 rounded-lg shadow border border-gray-200">
@@ -253,14 +297,16 @@ export default () => {
             </View>
           )}
           ListEmptyComponent={
-            <Text className="text-center text-gray-400 mt-8">No products found.</Text>
+            <Text className="text-center text-gray-400 mt-8">
+              {isLoading ? "Loading..." : "No products found."}
+            </Text>
           }
         />
 
         <TouchableOpacity
           onPress={openAddModal}
           className="absolute right-8 bg-blue-700 rounded-full p-4 shadow-lg"
-          style={{ bottom: 32 + insets.bottom }} // 32px above tab bar + safe area
+          style={{ bottom: 32 + insets.bottom }}
         >
           <MaterialIcons name="add" size={28} color="white" />
         </TouchableOpacity>
