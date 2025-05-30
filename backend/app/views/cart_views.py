@@ -4,8 +4,11 @@ from django.shortcuts import get_object_or_404
 from ..serializers.cart_serializers import *
 
 class CartListView(generics.ListAPIView):
-  serializer_class = CartBaseSerializer
-  queryset = Cart.objects.all()
+  serializer_class = CartListSerializer
+
+  def get_queryset(self):
+    user_id = self.kwargs.get('user')
+    return Cart.objects.select_related('prod').filter(acc=user_id)
 
 class CartCreateView(generics.CreateAPIView):
   serializer_class = CartCreateSerializer
