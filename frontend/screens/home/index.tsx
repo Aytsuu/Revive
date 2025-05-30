@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useGetProduct } from '../inventory/queries/inventoryFetch';
 
-const categories = ['All', 'Phones', 'Cases', 'Chargers', 'Headphones'];
+const categories = ['All', 'Apple', 'Samsung', 'Pixel', 'Xiaomi'];
 
 export default () => {
   const router = useRouter();
