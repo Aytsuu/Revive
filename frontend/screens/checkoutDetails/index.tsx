@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, Modal, Pressable } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
-type CartItem = {
-  id: string;
-  name: string;
-  image: any;
-  quantity: number;
-  price: number;
-  color: string;
+type Cart = {
+  cart_id: string;
+  cart_quantity: string;
+  prod_id: string;
+  prod_name: string;
+  prod_price: string;
+  prod_image: string;
+  acc: string
 };
 
 type TransactionDetails = {
   transactionId: string;
   date: string;
-  items: CartItem[];
+  items: Cart[];
   totalPrice: number;
 };
 
@@ -56,26 +57,29 @@ export default function CheckoutDetails() {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.prod_id}
         renderItem={({ item }) => (
-          <View className="flex-row items-center justify-between bg-gray-100 rounded-lg p-3 mb-3">
+          <View 
+            key={item.prod_id}
+            className="flex-row items-center justify-between bg-gray-100 rounded-lg p-3 mb-3"
+          >
 
             {/* Left side: Image */}
             <Image
-              source={item.image}
+              source={{ uri: item.prod_image }}
               style={{ width: 60, height: 60, borderRadius: 8, marginRight: 12 }}
               resizeMode="contain"
             />
 
             {/* Middle: Name, quantity, color */}
             <View className="flex-1">
-              <Text className="font-medium text-lg">{item.name}</Text>
-              <Text className="text-sm text-gray-600">Quantity: {item.quantity}</Text>
-              <Text className="text-sm text-gray-600">Color: {item.color}</Text>
+              <Text className="font-medium text-lg">{item.prod_name}</Text>
+              <Text className="text-sm text-gray-600">Quantity: {item.cart_quantity}</Text>
+              <Text className="text-sm text-gray-600">Color: Black</Text>
             </View>
 
             {/* Right side: Price */}
-            <Text className="text-base font-semibold">₱{item.price * item.quantity}</Text>
+            <Text className="text-base font-semibold">₱{+item.prod_price * +item.cart_quantity}</Text>
           </View>
         )}
       />

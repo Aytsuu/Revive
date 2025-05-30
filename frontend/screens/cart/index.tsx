@@ -73,9 +73,9 @@ export default function Cart() {
     return;
   }
 
-  const selectedCartItems = cartList.filter((item: any) => selectedItems.has(item.id));
+  const selectedCartItems = cartList.filter((item: any) => selectedItems.has(item.prod_id));
   const totalPrice = selectedCartItems.reduce(
-    (sum: any, item: any) => sum + item.price * item.quantity,
+    (sum: any, item: any) => sum + item.prod_price * item.cart_quantity,
     0
   );
 
