@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Image,
   Platform,
-  SafeAreaView,
   View,
   Text,
   StatusBar,
@@ -11,39 +10,28 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useGetCarList } from './queries/cartFetch';
+import { useSelector } from 'react-redux';
+import { selectAccount } from '@/redux/accountSlice';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type CartItem = {
-  id: string;
-  name: string;
-  image: any;
-  quantity: number;
-  price: number;
-  color: string;
+type Cart = {
+  cart_id: string;
+  cart_quantity: string;
+  prod_id: string;
+  prod_name: string;
+  prod_price: string;
+  prod_image: string;
+  acc: string
 };
 
-const initialCart: CartItem[] = [
-  {
-    id: '1',
-    name: 'Phone 1',
-    image: require('../../assets/images/phone1.jpg'),
-    quantity: 1,
-    color: 'Red',
-    price: 599,
-  },
-  {
-    id: '2',
-    name: 'Phone 2',
-    image: require('../../assets/images/phone2.jpg'),
-    quantity: 2,
-    color: 'Blue',
-    price: 749,
-  },
-];
-
 export default function Cart() {
+  const insets = useSafeAreaInsets();
+  const account = useSelector(selectAccount)
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCart);
+  const { data: cartList, isLoading } = useGetCarList(account.id);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const router = useRouter();
 
@@ -70,7 +58,7 @@ export default function Cart() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            setCartItems(prev => prev.filter(item => !selectedItems.has(item.id)));
+            
             setSelectedItems(new Set());
           },
         },
@@ -85,9 +73,9 @@ export default function Cart() {
     return;
   }
 
-  const selectedCartItems = cartItems.filter(item => selectedItems.has(item.id));
+  const selectedCartItems = cartList.filter((item: any) => selectedItems.has(item.id));
   const totalPrice = selectedCartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum: any, item: any) => sum + item.price * item.quantity,
     0
   );
 
@@ -107,27 +95,18 @@ export default function Cart() {
 };
 
   const adjustQuantity = (id: string, delta: number) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.id === id
-          ? {
-            ...item,
-            quantity: Math.max(1, item.quantity + delta),
-          }
-          : item
-      )
-    );
+    
   };
 
-  const renderItem: ListRenderItem<CartItem> = ({ item }) => {
-    const isSelected = selectedItems.has(item.id);
+  const renderItem: ListRenderItem<Cart> = ({ item }) => {
+    const isSelected = selectedItems.has(item.cart_id);
 
     return (
       <View className="mb-4 p-3 border-[1px] border-gray-300 rounded-lg relative">
         <View className="flex-row justify-between">
           <View className="flex-row items-center space-x-4 flex-1">
             <TouchableOpacity
-              onPress={() => toggleSelectItem(item.id)}
+              onPress={() => toggleSelectItem(item.cart_id)}
               className={`w-6 h-6 border-2 rounded-md justify-center items-center ${isSelected ? 'bg-[#31394d] border-[#31394d]' : 'border-gray-400'
                 }`}
             >
@@ -135,14 +114,14 @@ export default function Cart() {
             </TouchableOpacity>
 
             <Image
-              source={item.image}
+              source={{ uri: item.prod_image }}
               style={{ width: 80, height: 80, borderRadius: 8 }}
             />
 
             <View>
-              <Text className="text-lg font-semibold">{item.name}</Text>
-              <Text className="text-gray-600">Variant: {item.color}</Text>
-              <Text className="text-gray-800 font-medium">₱{item.price}</Text>
+              <Text className="text-lg font-semibold">{item.prod_name}</Text>
+              <Text className="text-gray-600">Variant: Black</Text>
+              <Text className="text-gray-800 font-medium">₱{item.prod_price}</Text>
             </View>
           </View>
 
@@ -150,14 +129,14 @@ export default function Cart() {
           <View className="flex-row justify-end items-center top-7 space-x-3">
             <TouchableOpacity
               className="w-7 h-7 bg-gray-200 rounded-full justify-center items-center"
-              onPress={() => adjustQuantity(item.id, -1)}
+              onPress={() => adjustQuantity(item.cart_id, -1)}
             >
               <Text className="text-lg font-bold">−</Text>
             </TouchableOpacity>
-            <Text className="font-semibold">{item.quantity}</Text>
+            <Text className="font-semibold">{item.cart_quantity}</Text>
             <TouchableOpacity
               className="w-7 h-7 bg-gray-200 rounded-full justify-center items-center"
-              onPress={() => adjustQuantity(item.id, 1)}
+              onPress={() => adjustQuantity(item.prod_id, 1)}
             >
               <Text className="text-lg font-bold">+</Text>
             </TouchableOpacity>
@@ -167,21 +146,23 @@ export default function Cart() {
     );
   };
 
+  if(isLoading) return;
+  
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: androidPaddingTop ?? 0 }}
       className="bg-white px-6"
     >
-      {cartItems.length === 0 ? (
+      {cartList?.length === 0 ? (
         <View className="flex-1 justify-center items-center">
           <Text className="text-gray-600 text-lg">Your cart is empty.</Text>
         </View>
       ) : (
         <>
           <FlatList
-            data={cartItems}
+            data={cartList}
             renderItem={renderItem}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.cart_id}
             contentContainerStyle={{ paddingBottom: 100 }}
           />
 
