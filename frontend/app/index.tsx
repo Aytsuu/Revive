@@ -5,7 +5,7 @@ export default () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/(tabs)');
+    router.replace('/(auth)');
   }, []);
 
   return null;

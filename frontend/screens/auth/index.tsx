@@ -12,7 +12,8 @@ import {
   usernameChanged, 
   emailChanged, 
   dobChanged, 
-  phoneChanged
+  phoneChanged,
+  idChanged
 } from '@/redux/accountSlice';
 
 const GLOBAL_STYLE = {
@@ -49,7 +50,8 @@ export default () => {
       password: values.password
     }, {
       onSuccess: (result) => {
-
+        console.log(result.id)
+        dispatch(idChanged(String(result.id)))
         dispatch(nameChanged(result.name));
         dispatch(usernameChanged(result.username));
         dispatch(emailChanged(result.email));

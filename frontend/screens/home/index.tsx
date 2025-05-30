@@ -13,21 +13,14 @@ import {
 import React from 'react';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useGetProduct } from '../inventory/queries/inventoryFetch';
 
 const categories = ['All', 'Phones', 'Cases', 'Chargers', 'Headphones'];
-
-export const products = [
-  { id: '1', image: require('../../assets/images/phone1.jpg') },
-  { id: '2', image: require('../../assets/images/phone2.jpg') },
-  { id: '3', image: require('../../assets/images/phone3.jpg') },
-  { id: '4', image: require('../../assets/images/phone4.jpg') },
-  { id: '5', image: require('../../assets/images/phone5.jpg') },
-];
 
 export default () => {
   const router = useRouter();
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
-
+  const { data: products, isLoading } = useGetProduct();
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: androidPaddingTop }}
@@ -67,7 +60,7 @@ export default () => {
         <View className="mt-6">
           <FlatList
             data={products}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.prod_id}
             numColumns={2}
             columnWrapperStyle={{ justifyContent: 'space-between' }}
             scrollEnabled={false}
@@ -76,18 +69,26 @@ export default () => {
                 onPress={() =>
                   router.push({
                     pathname: '/(product)/details',
-                    params: { id: item.id },
+                    params: {  
+                      prod_id: item.prod_id,
+                      prod_name: item.prod_name,
+                      prod_details: item.prod_details,
+                      prod_brand: item.prod_brand,
+                      prod_price: item.prod_price,
+                      prod_stock: item.prod_stock,
+                      prod_image: item.prod_image
+                    },
                   })
                 }
                 className="bg-gray-100 rounded-xl mb-4 w-[48%] overflow-hidden"
               >
                 <Image
-                  source={item.image}
+                  source={{ uri: item.prod_image }}
                   className="w-full h-32"
                   resizeMode="cover"
                 />
                 <Text className="p-2 font-medium text-gray-800">
-                  Product {item.id}
+                  {item.prod_name}
                 </Text>
               </Pressable>
             )}

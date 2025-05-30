@@ -14,4 +14,8 @@ class ProductUpdateView(generics.UpdateAPIView):
   queryset = Product.objects.all()
   lookup_field = 'prod_id'
     
-
+class ProductDeleteView(generics.DestroyAPIView):
+  serializer_class = ProductBaseSerializer
+  queryset = Product.objects.all()
+  lookup_field = 'prod_id'
+  

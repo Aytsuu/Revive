@@ -44,6 +44,7 @@ class AccountLoginView(APIView):
         Token.objects.get_or_create(user=user)
 
         return Response({
+          'id': user.id,
           'name': user.name,
           'dateOfBirth': user.dob,
           'phone': user.contact,

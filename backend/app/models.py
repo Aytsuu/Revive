@@ -46,8 +46,17 @@ class Transaction(models.Model):
 
 class Cart(models.Model):
   cart_id = models.BigAutoField(primary_key=True)
+  cart_quantity = models.IntegerField()
   prod = models.ForeignKey(Product, on_delete=models.CASCADE)
   acc = models.ForeignKey(Account, on_delete=models.CASCADE)
 
   class Meta:
     db_table = 'cart'
+
+class Feedback(models.Model):
+  feed_id = models.BigAutoField(primary_key=True)
+  feed_commnet = models.TextField()
+  feed_date = models.DateField(auto_now_add=True)
+
+  class Meta:
+    db_table = 'feedback'

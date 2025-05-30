@@ -24,6 +24,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { useAddProduct } from "./queries/inventoryAdd";
 import { useGetProduct } from "./queries/inventoryFetch";
 import { useUpdateProduct } from "./queries/inventoryUpdate";
+import { useDeleteProduct } from "./rest_api/inventoryDELETE";
 
 type productForm = z.infer<typeof productFormSchema>
 
@@ -40,8 +41,9 @@ type Product = {
 export default () => {
   const insets = useSafeAreaInsets();
   const { data: products, isLoading } = useGetProduct();
-  const { mutateAsync: updateProduct } = useUpdateProduct();
   const { mutateAsync: addProduct } = useAddProduct();
+  const { mutateAsync: updateProduct } = useUpdateProduct();
+  const { mutateAsync: deleteProduct } = useDeleteProduct();
   const {control, trigger, getValues, setValue} = useForm<productForm>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -53,10 +55,11 @@ export default () => {
     }
   });
 
-  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>();
+  const [photo, setPhoto] = useState<string | null>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<string | null>(null);
 
   const openAddModal = () => {
     setIsEditMode(false);
@@ -72,8 +75,8 @@ export default () => {
     setValue('prod_brand', product.prod_brand);
     setValue('prod_price', String(product.prod_price));
     setValue('prod_stock', String(product.prod_stock));
-
-    console.log(getValues());
+    setPhoto(product.prod_image);
+    setEditingPhoto(product.prod_image);
 
     setIsEditMode(true);
     setEditingId(id);
@@ -88,7 +91,7 @@ export default () => {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const image = result.assets[0];
+      const image = result.assets[0].uri;
       setPhoto(image);
     }
   };
@@ -97,7 +100,7 @@ export default () => {
     if(!photo) return;
 
     const compressedImage = await ImageManipulator.manipulateAsync(
-        photo.uri,
+        photo,
         [{resize: {width: 1200, height: 1080}}],
         {
           compress: 0.8,
@@ -167,8 +170,12 @@ export default () => {
     const values = getValues();
     if (isEditMode && editingId) {
 
-      updateProduct(photo ? 
-        {...values, prod_image: await storePhoto()} : values, {
+      updateProduct({
+          data: {...values, prod_image: photo == editingPhoto ? 
+            photo : await storePhoto()
+          },
+          prodId: editingId
+        }, {
           onSuccess: () => {
             Alert.alert("Success", "product updated successfully!");
             setIsEditMode(false);
@@ -202,7 +209,11 @@ export default () => {
       {
         text: "Remove",
         onPress: () => {
-          
+          deleteProduct(id, {
+            onSuccess: () => {
+              Alert.alert("Success", "product removed successfully!");
+            }
+          })
         },
         style: "destructive",
       },
@@ -275,7 +286,7 @@ export default () => {
               {/* Preview */}
               {photo && (
                 <Image
-                  source={{ uri: photo.uri }}
+                  source={{ uri: photo }}
                   className="w-full h-40 rounded-md mb-4"
                   resizeMode="cover"
                 />

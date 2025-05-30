@@ -9,20 +9,21 @@ import {
   Text,
   StatusBar,
   ScrollView,
-  Animated,
+  Alert,
   Dimensions,
 } from 'react-native';
-import { products } from '../home';
+import { useGetProduct } from '../inventory/queries/inventoryFetch';
+import { useAddCart } from '../cart/queries/cartAdd';
+import { useSelector } from 'react-redux';
+import { selectAccount } from '@/redux/accountSlice';
 
 const { height } = Dimensions.get('window');
 
 export default function ProductDetail() {
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
-  const { id } = useLocalSearchParams();
-  const productId = Array.isArray(id) ? id[0] : id;
-  const product = products.find(p => p.id === productId);
-
-
+  const account = useSelector(selectAccount);
+  const { prod_id, prod_name, prod_details, prod_price, prod_image } = useLocalSearchParams<Record<string, any>>();
+  const { mutateAsync: addCart } = useAddCart();
   const [showModal, setShowModal] = useState(false);
   const [selectedColor, setSelectedColor] = useState('Black');
   const [quantity, setQuantity] = useState(1);
@@ -33,7 +34,7 @@ export default function ProductDetail() {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }} className="px-6">
         <View className="justify-center items-center">
           <Image
-            source={product!.image}
+            source={{ uri: prod_image }}
             className="w-64 h-96 mt-4"
             resizeMode="cover"
           />
@@ -42,13 +43,12 @@ export default function ProductDetail() {
         {/* Description Section */}
         <View className="mt-6">
           <View className='flex-row items-center justify-between'>
-            <Text className="text-2xl font-bold text-[#162c39]">₱9,999.00</Text>
+            <Text className="text-2xl font-bold text-[#162c39]">₱{prod_price}</Text>
             <Text className="text-base font-bold text-[#162c39]">2 Sold</Text>
           </View>
-          <Text className="text-lg font-semibold text-gray-800 mt-2">Phone Name</Text>
+          <Text className="text-lg font-semibold text-gray-800 mt-2">{prod_name}</Text>
           <Text className="text-base text-gray-600 mt-2">
-            This is a high-quality smartphone with a stunning display, excellent battery life,
-            and powerful performance — perfect for gaming, photography, and productivity.
+            {prod_details}
           </Text>
         </View>
 
@@ -80,8 +80,8 @@ export default function ProductDetail() {
         </View>
       </ScrollView>
 
-{/* Sticky Buttons at the Bottom */}
-{!showModal && (
+      {/* Sticky Buttons at the Bottom */}
+      {!showModal && (
         <View className="absolute bottom-0 left-0 right-0 px-6 py-4 pb-6 bg-white border-t border-gray-200 flex-row justify-between">
           <TouchableOpacity
             className="flex-1 mr-2 bg-[#00477f] py-3 rounded-xl items-center"
@@ -174,8 +174,16 @@ export default function ProductDetail() {
               <TouchableOpacity
                 className="bg-[#00477f] py-3 rounded-xl items-center"
                 onPress={() => {
-                  setShowModal(false);
-                  // Add to Cart logic here
+                  addCart({
+                    prod: prod_id, 
+                    acc: account.id,
+                    cart_quantity: quantity
+                  }, {
+                    onSuccess: () => {
+                      Alert.alert("Success", "product added to your cart!");
+                      setShowModal(false);
+                    }
+                  })
                 }}
               >
                 <Text className="text-white font-semibold">Add to Cart</Text>

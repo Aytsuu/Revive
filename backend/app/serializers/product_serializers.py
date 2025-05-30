@@ -40,5 +40,4 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
     instance.save()
     return instance
     
-
     
