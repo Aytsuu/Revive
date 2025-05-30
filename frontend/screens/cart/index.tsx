@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Image,
   Platform,
-  SafeAreaView,
   View,
   Text,
   StatusBar,
@@ -11,10 +10,12 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGetCarList } from './queries/cartFetch';
 import { useSelector } from 'react-redux';
 import { selectAccount } from '@/redux/accountSlice';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Cart = {
   cart_id: string;
@@ -27,6 +28,7 @@ type Cart = {
 };
 
 export default function Cart() {
+  const insets = useSafeAreaInsets();
   const account = useSelector(selectAccount)
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const { data: cartList, isLoading } = useGetCarList(account.id);
@@ -145,13 +147,13 @@ export default function Cart() {
   };
 
   if(isLoading) return;
-
+  
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: androidPaddingTop ?? 0 }}
       className="bg-white px-6"
     >
-      {cartList.length === 0 ? (
+      {cartList?.length === 0 ? (
         <View className="flex-1 justify-center items-center">
           <Text className="text-gray-600 text-lg">Your cart is empty.</Text>
         </View>
