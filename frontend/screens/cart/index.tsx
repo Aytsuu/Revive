@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 type CartItem = {
   id: string;
@@ -44,6 +45,7 @@ export default function Cart() {
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const [cartItems, setCartItems] = useState<CartItem[]>(initialCart);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const router = useRouter();
 
   const toggleSelectItem = (id: string) => {
     setSelectedItems(prev => {
@@ -78,34 +80,31 @@ export default function Cart() {
   };
 
   const confirmCheckoutSelected = () => {
-    if (selectedItems.size === 0) {
-      Alert.alert('No items selected', 'Please select items to checkout.');
-      return;
-    }
+  if (selectedItems.size === 0) {
+    Alert.alert('No items selected', 'Please select items to checkout.');
+    return;
+  }
 
-    const selectedCartItems = cartItems.filter(item => selectedItems.has(item.id));
-    const selectedNames = selectedCartItems.map(item => item.name).join(', ');
-    const totalPrice = selectedCartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+  const selectedCartItems = cartItems.filter(item => selectedItems.has(item.id));
+  const totalPrice = selectedCartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
-    Alert.alert(
-      'Confirm Checkout',
-      `Are you sure you want to checkout: ${selectedNames}?\n\nTotal Price: ₱${totalPrice}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Yes',
-          onPress: () => {
-            Alert.alert('Success', 'Checked out: ' + selectedNames);
-            setSelectedItems(new Set());
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const transactionDetails = {
+    items: selectedCartItems,
+    transactionId: `TXN-${Date.now()}`, // ✅ unique and easy to debug
+    date: new Date().toISOString(),     // ✅ ISO string (safe to transmit as text)
+    totalPrice,
   };
+
+  router.push({
+    pathname: '/(product)/checkoutDetails',
+    params: {
+      transactionDetails: encodeURIComponent(JSON.stringify(transactionDetails)), // ✅ safely encode
+    },
+  });
+};
 
   const adjustQuantity = (id: string, delta: number) => {
     setCartItems(prev =>

@@ -50,6 +50,12 @@ export default function ProductLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="checkoutDetails"
+        options={{
+          title: 'Checkout',
+        }}
+      />
 
     </Stack>
   );
