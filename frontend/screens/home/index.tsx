@@ -44,11 +44,11 @@ export default () => {
 
   // Filter products by category
   const filteredProducts = selectedCategory === 'All' 
-    ? localProducts 
-    : localProducts.filter(product => 
-        product.prod_name.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-        product.prod_details.toLowerCase().includes(selectedCategory.toLowerCase())
-      );
+  ? localProducts 
+  : localProducts.filter(product => {
+      const firstWord = product.prod_name.split(' ')[0].toLowerCase();
+      return firstWord === selectedCategory.toLowerCase();
+    });
 
   return (
     <SafeAreaView
