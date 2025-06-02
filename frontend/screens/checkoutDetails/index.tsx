@@ -57,7 +57,7 @@ export default function CheckoutDetails() {
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.prod_id}
+        keyExtractor={(item) => item.cart_id}
         renderItem={({ item }) => (
           <View 
             key={item.prod_id}

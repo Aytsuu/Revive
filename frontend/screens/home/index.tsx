@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   FlatList,
   Pressable,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
@@ -32,23 +33,28 @@ export default () => {
   const router = useRouter();
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const { data: products, isLoading } = useGetProduct();
+
   const [localProducts, setLocalProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Sync fetched products with local state
   useEffect(() => {
     if (products) {
       setLocalProducts(products);
     }
   }, [products]);
 
-  // Filter products by category
-  const filteredProducts = selectedCategory === 'All' 
-  ? localProducts 
-  : localProducts.filter(product => {
-      const firstWord = product.prod_name.split(' ')[0].toLowerCase();
-      return firstWord === selectedCategory.toLowerCase();
-    });
+  const filteredProducts = localProducts.filter((product) => {
+    const name = product.prod_name.toLowerCase();
+    const categoryMatch =
+      selectedCategory === 'All' ||
+      product.prod_name.split(' ')[0].toLowerCase() === selectedCategory.toLowerCase();
+
+    const searchMatch = name.includes(searchQuery.toLowerCase());
+
+    return isSearching ? searchMatch : categoryMatch;
+  });
 
   return (
     <SafeAreaView
@@ -58,12 +64,33 @@ export default () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="flex-row items-center justify-between pt-5">
-          <Text className="text-3xl text-[#31394d] font-bold font-poppins">
-            Choose your phone
-          </Text>
-          <TouchableOpacity>
-            <Feather name="search" size={28} color="black" />
-          </TouchableOpacity>
+          {isSearching ? (
+            <View className="flex-row items-center bg-gray-100 rounded-lg px-3 flex-1 mr-2">
+              <Feather name="search" size={20} color="gray" />
+              <TextInput
+                placeholder="Search products..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+                className="flex-1 ml-2 py-2"
+              />
+              <TouchableOpacity onPress={() => {
+                setIsSearching(false);
+                setSearchQuery('');
+              }}>
+                <Feather name="x" size={20} color="gray" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text className="text-3xl text-[#31394d] font-bold font-poppins">
+                Choose your phone
+              </Text>
+              <TouchableOpacity onPress={() => setIsSearching(true)}>
+                <Feather name="search" size={28} color="black" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         {/* Banner */}
@@ -75,29 +102,31 @@ export default () => {
           />
         </View>
 
-        {/* Category Boxes */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          className="mt-6"
-          contentContainerStyle={{ paddingBottom: 8 }}
-        >
-          {categories.map((cat, idx) => (
-            <TouchableOpacity
-              key={idx}
-              className={`px-4 py-2 rounded-xl mr-3 ${
-                selectedCategory === cat ? 'bg-blue-600' : 'bg-gray-200'
-              }`}
-              onPress={() => setSelectedCategory(cat)}
-            >
-              <Text className={`text-sm font-medium ${
-                selectedCategory === cat ? 'text-white' : 'text-gray-700'
-              }`}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* Categories (hidden while searching) */}
+        {!isSearching && (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            className="mt-6"
+            contentContainerStyle={{ paddingBottom: 8 }}
+          >
+            {categories.map((cat, idx) => (
+              <TouchableOpacity
+                key={idx}
+                className={`px-4 py-2 rounded-xl mr-3 ${
+                  selectedCategory === cat ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <Text className={`text-sm font-medium ${
+                  selectedCategory === cat ? 'text-white' : 'text-gray-700'
+                }`}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Product Grid */}
         <View className="mt-6 mb-10">
@@ -157,4 +186,4 @@ export default () => {
       </ScrollView>
     </SafeAreaView>
   );
-}
+};
