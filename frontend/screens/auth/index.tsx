@@ -64,8 +64,7 @@ export default () => {
       onError: (err) => {
         console.log(err.message.split(' ').at(-1));
       }
-    })
-
+    });
   };
 
   return (
