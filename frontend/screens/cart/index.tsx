@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Image,
   Platform,
@@ -31,7 +31,14 @@ export default function Cart() {
   const insets = useSafeAreaInsets();
   const account = useSelector(selectAccount)
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
-  const { data: cartList, isLoading } = useGetCarList(account.id);
+  const { data, isLoading } = useGetCarList(account.id);
+  const [cartList, setCartList] = useState<Cart[]>([]);
+
+  useEffect(() => {
+    if (data) {
+      setCartList(data);
+    }
+  }, [data]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const router = useRouter();
 
@@ -42,30 +49,30 @@ export default function Cart() {
       return newSet;
     });
   };
-
   const removeSelectedItems = () => {
-    if (selectedItems.size === 0) {
-      Alert.alert('No items selected', 'Please select items to remove.');
-      return;
-    }
+  if (selectedItems.size === 0) {
+    Alert.alert('No items selected', 'Please select items to remove.');
+    return;
+  }
 
-    Alert.alert(
-      'Remove Items',
-      'Are you sure you want to remove the selected items?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            
-            setSelectedItems(new Set());
-          },
+  Alert.alert(
+    'Remove Items',
+    'Are you sure you want to remove the selected items?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          setCartList(prev => prev.filter(item => !selectedItems.has(item.cart_id)));
+          setSelectedItems(new Set());
         },
-      ],
-      { cancelable: true }
-    );
-  };
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
 
   const confirmCheckoutSelected = () => {
   if (selectedItems.size === 0) {
@@ -73,7 +80,7 @@ export default function Cart() {
     return;
   }
 
-  const selectedCartItems = cartList.filter((item: any) => selectedItems.has(item.prod_id));
+  const selectedCartItems = cartList.filter((item: any) => selectedItems.has(item.cart_id));
   const totalPrice = selectedCartItems.reduce(
     (sum: any, item: any) => sum + item.prod_price * item.cart_quantity,
     0

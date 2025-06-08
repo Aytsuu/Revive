@@ -15,7 +15,7 @@ import { useSelector } from 'react-redux';
 import { selectAccount } from '@/redux/accountSlice';
 
 export default function Profile() {
-  const accountData = useSelector(selectAccount)
+  const accountData = useSelector(selectAccount);
   const androidPaddingTop = Platform.OS === 'android' ? StatusBar.currentHeight : 0;
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -38,6 +38,10 @@ export default function Profile() {
     setEditMode(!editMode);
   };
 
+  const handleLogout = () => {
+    router.replace('/(auth)'); 
+  };
+
   return (
     <SafeAreaView
       style={{ flex: 1, paddingTop: androidPaddingTop }}
@@ -56,7 +60,7 @@ export default function Profile() {
         </TouchableOpacity>
       </View>
 
-      <View className='flex-col justify-between flex-1'>
+      <View className="flex-col justify-between flex-1">
         <View className="mt-8 space-y-4">
           <View>
             <Text className="text-gray-500 text-sm">Name</Text>
@@ -109,8 +113,8 @@ export default function Profile() {
                 My Purchases
               </Text>
             </TouchableOpacity>
-
           )}
+
           <TouchableOpacity
             onPress={toggleEdit}
             className="bg-[#31394d] py-3 rounded-xl items-center"
@@ -119,10 +123,16 @@ export default function Profile() {
               {editMode ? 'Save Changes' : 'Edit Profile'}
             </Text>
           </TouchableOpacity>
+
+          {/* 🔴 Logout Button */}
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="bg-red-100 py-3 rounded-xl items-center"
+          >
+            <Text className="text-red-600 font-semibold text-base">Logout</Text>
+          </TouchableOpacity>
         </View>
-
       </View>
-
     </SafeAreaView>
   );
 }

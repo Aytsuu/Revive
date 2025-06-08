@@ -10,22 +10,8 @@ export default function ProductLayout() {
       <Stack.Screen
         name="details"
         options={{
+          title: "Product Details",
           headerShown: true,
-          headerTitle: () => (
-            <View style={{ flex: 1 }}>
-              <TextInput
-                placeholder="Search for more products"
-                placeholderTextColor="#999"
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: 8,
-                  paddingHorizontal: 10,
-                  height: 36,
-                  width: 220,
-                }}
-              />
-            </View>
-          ),
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/cart')}
